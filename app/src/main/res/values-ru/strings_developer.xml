@@ -27,7 +27,25 @@
     <string name="dev_run_log">Журнал запусков</string>
     <string name="dev_prompts_group">Системный промпт</string>
     <string name="dev_prompts_title">Загружать промпты с телефона</string>
-    <string name="dev_prompts_grant">Нужен «Доступ ко всем файлам» — нажмите, чтобы разрешить</string>
+    <string name="dev_prompts_grant">Используется приватная папка приложения; нажмите, чтобы сменить</string>
     <string name="dev_prompts_active">%1$s · файлов: %2$d · изменено: %3$d · пропущено: %4$d</string>
     <string name="dev_prompts_error">Не используется: %1$s</string>
+    <string name="prompts_title">Системный промпт</string>
+    <string name="prompts_folder">Папка</string>
+    <string name="prompts_access">Доступ ко всем файлам</string>
+    <string name="prompts_access_on">Разрешён; используется общая папка телефона</string>
+    <string name="prompts_access_off">Не разрешён; используется приватная папка приложения</string>
+    <string name="prompts_counts">%1$d файлов · %2$d изменено · %3$d пропущено</string>
+    <string name="prompts_changed">Изменённые и пропущенные</string>
+    <string name="prompts_all_plain">Все файлы — из приложения</string>
+    <string name="prompts_rejected">Пропущен: %1$s</string>
+    <string name="prompts_edited">Изменён</string>
+    <string name="prompts_deleted">Удалён; используется файл приложения</string>
+    <string name="prompts_restore">Восстановить</string>
+    <string name="prompts_restored">Восстановлено</string>
+    <string name="prompts_restore_failed">Не удалось восстановить</string>
+    <string name="prompts_restore_all">Восстановить все файлы</string>
+    <string name="prompts_restore_all_sub">Удаляет ваши изменения и возвращает файлы приложения</string>
+    <string name="prompts_restore_all_ask">Ваши изменения в папке будут удалены, вернутся файлы приложения.</string>
+    <string name="prompts_note">system/ и capabilities/ читаются на каждой задаче; tools/, entries/, feedback/ и roles/ требуют перезапуска Mika.</string>
 </resources>

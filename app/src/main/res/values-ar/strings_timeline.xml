@@ -112,4 +112,5 @@
     <string name="timeline_running">قيد التشغيل</string>
     <string name="timeline_token_budget">ميزانية Token</string>
     <string name="timeline_token_budget_value">%1$s / %2$s</string>
+    <string name="timeline_prompt_version">نسخة الموجّه</string>
 </resources>

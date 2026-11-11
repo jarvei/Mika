@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -9,6 +11,12 @@ plugins {
 val gitHash: String = runCatching {
     providers.exec { commandLine("git", "rev-parse", "--short=7", "HEAD") }.standardOutput.asText.get().trim()
 }.getOrNull()?.takeIf { it.isNotEmpty() } ?: "dev"
+
+// 自己的签名(可选):仓库根目录的 fork-signing.properties 里写 storeFile / storePassword / keyAlias / keyPassword。
+// 有这个文件时 release 和 perf 用这把钥匙,换一台机器编译也能覆盖安装同一个包;没有就用调试钥匙(和上游一样)。
+val forkSigning: Properties? = rootProject.file("fork-signing.properties").takeIf { it.isFile }?.let { f ->
+    Properties().apply { f.inputStream().use { input -> load(input) } }
+}
 
 android {
     namespace = "com.wangzan101.mika"
@@ -53,6 +61,18 @@ android {
     // 评测任务集(仓库根目录 eval/tasks)打进测试包的 assets,真机评测跑器从那里读题
     sourceSets.getByName("androidTest").assets.srcDir(rootProject.file("eval/tasks"))
 
+    // 自己的钥匙(见上面的 forkSigning);没有就不建这一组
+    signingConfigs {
+        forkSigning?.let { p ->
+            create("fork") {
+                storeFile = rootProject.file(p.getProperty("storeFile"))
+                storePassword = p.getProperty("storePassword")
+                keyAlias = p.getProperty("keyAlias")
+                keyPassword = p.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         // 真机验收时并排安装,保留发行版和用户数据;默认构建标识不变。
         if (providers.gradleProperty("devInstall").isPresent) getByName("debug") {
@@ -63,9 +83,13 @@ android {
         // 用本机调试签名,能直接覆盖调试包、保留数据;可被性能工具采样。./gradlew :app:assemblePerf
         create("perf") {
             initWith(getByName("release"))
-            signingConfig = signingConfigs.getByName("debug")
+            // 有 fork-signing.properties 就用那把钥匙(换机器也能覆盖安装),没有就用调试钥匙
+            signingConfig = signingConfigs.findByName("fork") ?: signingConfigs.getByName("debug")
             isProfileable = true
             matchingFallbacks += "release"
+        }
+        getByName("release") {
+            signingConfigs.findByName("fork")?.let { signingConfig = it }
         }
     }
 

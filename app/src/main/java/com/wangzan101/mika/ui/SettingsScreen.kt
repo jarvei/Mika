@@ -69,7 +69,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** 设置里能进入的子页面;[Home] 是设置首页,[Advanced] 集中放置连接、维护和工程能力。 */
-private enum class SettingsPage { Home, Advanced, AppAccess, PhoneOps, Calls, Wechat, DuringWork, Capsule, Language, Notifications, Recommendations, Sandbox, Recovery, SelfCheck, ComputerAccess, McpServers, Root, Developer, RunStats }
+private enum class SettingsPage { Home, Advanced, AppAccess, PhoneOps, Calls, Wechat, DuringWork, Capsule, Language, Notifications, Recommendations, Sandbox, Recovery, SelfCheck, ComputerAccess, McpServers, Root, Developer, RunStats, Prompts }
 
 /**
  * 设置页:总状态卡 + 常用 / 我的数据 / 其他。高级与其他只增加一层,各子页返回来时的页面。
@@ -171,6 +171,7 @@ fun SettingsScreen(
     val back = {
         page = when (page) {
             SettingsPage.RunStats -> SettingsPage.Developer
+            SettingsPage.Prompts -> SettingsPage.Developer
             SettingsPage.SelfCheck -> SettingsPage.Recovery
             SettingsPage.Sandbox, SettingsPage.Recovery, SettingsPage.ComputerAccess,
             SettingsPage.McpServers, SettingsPage.Root, SettingsPage.Developer -> SettingsPage.Advanced
@@ -256,19 +257,11 @@ fun SettingsScreen(
             onGrounding = { verified -> scope.launch { withContext(Dispatchers.IO) { store.setVisionGroundingVerified(verified) } } },
             onOpenRunStats = { page = SettingsPage.RunStats },
             prompts = promptFolder,
-            // 点这一行:重新对齐一次(Mika/prompts),还没授权就去系统的「所有文件访问权限」
-            onPrompts = {
-                scope.launch {
-                    val s = withContext(Dispatchers.IO) {
-                        com.wangzan101.mika.prompt.PromptFolder.install(context)
-                            .let { com.wangzan101.mika.prompt.PromptFolder.inspect() ?: it }
-                    }
-                    promptFolder = s
-                    if (!s.granted) openAllFilesAccess(context)
-                }
-            },
+            // 点这一行:打开提示词那一页(目录、改过的、恢复)
+            onPrompts = { page = SettingsPage.Prompts },
         )
         SettingsPage.RunStats -> RunStatsScreen(remember { RunStore(context).metrics }, onBack = back)
+        SettingsPage.Prompts -> PromptScreen(onBack = back)
     }
 
     if (editingProxy) NetProxyDialog(
@@ -568,7 +561,7 @@ private fun StatusSummary(check: Prerequisites.Check, onProblem: (Problem) -> Un
  * 打开系统的「所有文件访问权限」页(提示词目录 Mika/prompts 要用它);
  * 个别系统没有单独这一页,就退到总列表。
  */
-private fun openAllFilesAccess(context: android.content.Context) {
+internal fun openAllFilesAccess(context: android.content.Context) {
     val task = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
     val app = android.content.Intent(
         android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,

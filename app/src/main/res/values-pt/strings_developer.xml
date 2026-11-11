@@ -27,7 +27,25 @@
     <string name="dev_run_log">Registros de execução</string>
     <string name="dev_prompts_group">Prompt do sistema</string>
     <string name="dev_prompts_title">Carregar os prompts do telefone</string>
-    <string name="dev_prompts_grant">Precisa de «Acesso a todos os arquivos»; toque para permitir</string>
+    <string name="dev_prompts_grant">Usando a pasta privada do app; toque para mudar</string>
     <string name="dev_prompts_active">%1$s · %2$d arquivos · %3$d editados · %4$d ignorados</string>
     <string name="dev_prompts_error">Não usado: %1$s</string>
+    <string name="prompts_title">Prompt do sistema</string>
+    <string name="prompts_folder">Pasta</string>
+    <string name="prompts_access">Acesso a todos os arquivos</string>
+    <string name="prompts_access_on">Concedido; usa a pasta pública do telefone</string>
+    <string name="prompts_access_off">Não concedido; usa a pasta privada do app</string>
+    <string name="prompts_counts">%1$d arquivos · %2$d editados · %3$d ignorados</string>
+    <string name="prompts_changed">Editados ou sem uso</string>
+    <string name="prompts_all_plain">Todos os arquivos são os do app</string>
+    <string name="prompts_rejected">Ignorado: %1$s</string>
+    <string name="prompts_edited">Editado</string>
+    <string name="prompts_deleted">Apagado; usa o do app</string>
+    <string name="prompts_restore">Restaurar</string>
+    <string name="prompts_restored">Restaurado</string>
+    <string name="prompts_restore_failed">Não foi possível restaurar</string>
+    <string name="prompts_restore_all">Restaurar todos os arquivos</string>
+    <string name="prompts_restore_all_sub">Apaga suas mudanças e volta a pôr os do app</string>
+    <string name="prompts_restore_all_ask">Suas mudanças na pasta serão apagadas e os arquivos do app voltam.</string>
+    <string name="prompts_note">system/ e capabilities/ são lidos a cada tarefa; tools/, entries/, feedback/ e roles/ precisam reiniciar o Mika.</string>
 </resources>

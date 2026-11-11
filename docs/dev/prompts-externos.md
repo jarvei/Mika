@@ -10,22 +10,36 @@ Lo que hay en esa carpeta sustituye, archivo por archivo, a lo que va dentro de 
 APK. Un archivo que no esté en la carpeta sale de la APK: vaciar la carpeta o quitar
 el permiso devuelve el comportamiento original sin recompilar nada.
 
-## Permiso
+## Dónde está la carpeta
 
-La carpeta está fuera del espacio privado de la app, así que hace falta «Acceso a todos
-los archivos». Mika lo declara en el manifiesto y no hace nada mientras no se conceda:
-sin permiso, todos los prompts salen de la APK.
+Hay dos ubicaciones y la app elige sola:
 
-Ajustes › Avanzado y otros › Opciones de desarrollador: la fila «Prompt del sistema»
-enseña la ruta, cuántos archivos hay, cuántos has tocado tú y cuántos se ignoran por no
-valer. Los tres números se cuentan al abrir esa página (`PromptFolder.inspect()`), no al
-arrancar: leer el árbol entero en el arranque se nota en el tiempo de apertura. Si falta el permiso, al tocar la
-fila se abre la pantalla del sistema para concederlo; si ya está, vuelve a alinear la
-carpeta (útil después de actualizar).
+| permiso | carpeta | quién puede editarla |
+| --- | --- | --- |
+| «Acceso a todos los archivos» concedido | `/sdcard/Mika/prompts` | cualquier editor o gestor de archivos |
+| sin conceder | `Android/data/<paquete>/files/prompts` | sólo Mika y los gestores que entran en Android/data |
 
-Ojo: la carpeta está fuera del sandbox de la app. Cualquier app con «acceso a todos los
-archivos» puede escribir ahí, y lo que hay ahí es el prompt del sistema. Es el precio de
-poder editarlo desde el teléfono sin recompilar.
+Al conceder el permiso, lo que hubiera en la carpeta privada se traslada a la pública
+(archivos y manifiesto) y se sigue desde ahí; al revocarlo se usa la privada, que puede
+estar desactualizada. La ruta y el estado se ven en la página de ajustes de más abajo.
+
+Ojo: la carpeta pública está fuera del sandbox de la app. Cualquier app con «acceso a
+todos los archivos» puede escribir ahí, y lo que hay ahí es el prompt del sistema. Es el
+precio de poder editarlo desde el teléfono sin recompilar.
+
+## Ajustes › Prompt del sistema
+
+Ajustes › Avanzado y otros › Opciones de desarrollador › Prompt del sistema
+(`PromptScreen`), visible en las compilaciones de depuración y `perf`:
+
+- la ruta que se está usando y si viene del permiso o de la carpeta privada;
+- cuántos archivos hay, cuántos has tocado y cuántos se ignoran;
+- la lista de los que no son los de la app, con el motivo del ignorado, y un botón para
+  restaurar cada uno desde la APK;
+- «Restaurar todos los ficheros»: borra la carpeta y la vuelve a sembrar, con confirmación.
+
+Los números y la lista se calculan al abrir la página (`PromptFolder.inspect()` y
+`PromptFolder.items()`), no al arrancar: recorrer el árbol entero en el arranque se nota.
 
 ## Qué hay en la carpeta
 
@@ -84,6 +98,8 @@ deja que la app lo vuelva a poner, o se toca «Prompt del sistema» en los ajust
   proceso).
 - `app/src/main/java/com/wangzan101/mika/ui/DeveloperOptionsScreen.kt`: la fila de los
   ajustes.
+- `app/src/main/java/com/wangzan101/mika/ui/PromptScreen.kt`: la página con la lista y los
+  botones de restaurar.
 
 ## Compilar
 
@@ -95,6 +111,11 @@ export ANDROID_HOME=~/Android/Sdk
 ./gradlew :app:assemblePerf
 ```
 
-Sale firmado con la clave de depuración de esta máquina, así que la firma no coincide
-con la del Mika oficial: hay que desinstalar el oficial antes de instalar este (se
-pierden los datos de la app, no los de la carpeta de prompts, que está fuera).
+La firma es la del fork: `fork.keystore` con sus claves en `fork-signing.properties`, los
+dos fuera de git. `app/build.gradle.kts` los lee si están y firma `perf` y `release` con esa
+clave; sin el fichero, `perf` cae a la clave de depuración como antes. Con la misma clave en
+otra máquina, `adb install -r` actualiza sin desinstalar.
+
+La firma no coincide con la del Mika oficial, así que la primera instalación de este fork
+sobre el oficial exige desinstalar (se van los datos de la app; la carpeta de prompts está
+fuera y se queda).

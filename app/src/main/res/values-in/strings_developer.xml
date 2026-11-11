@@ -27,7 +27,25 @@
     <string name="dev_run_log">Catatan eksekusi</string>
     <string name="dev_prompts_group">Prompt sistem</string>
     <string name="dev_prompts_title">Muat prompt dari penyimpanan ponsel</string>
-    <string name="dev_prompts_grant">Perlu «Akses semua file»; ketuk untuk mengizinkan</string>
+    <string name="dev_prompts_grant">Memakai folder privat aplikasi; ketuk untuk menggantinya</string>
     <string name="dev_prompts_active">%1$s · %2$d berkas · %3$d diedit · %4$d diabaikan</string>
     <string name="dev_prompts_error">Tidak dipakai: %1$s</string>
+    <string name="prompts_title">Prompt sistem</string>
+    <string name="prompts_folder">Folder</string>
+    <string name="prompts_access">Akses semua file</string>
+    <string name="prompts_access_on">Diberikan; memakai folder publik di ponsel</string>
+    <string name="prompts_access_off">Belum diberikan; memakai folder privat aplikasi</string>
+    <string name="prompts_counts">%1$d berkas · %2$d diedit · %3$d diabaikan</string>
+    <string name="prompts_changed">Diedit atau tidak dipakai</string>
+    <string name="prompts_all_plain">Semua berkas sama dengan yang di aplikasi</string>
+    <string name="prompts_rejected">Diabaikan: %1$s</string>
+    <string name="prompts_edited">Diedit</string>
+    <string name="prompts_deleted">Dihapus; memakai berkas aplikasi</string>
+    <string name="prompts_restore">Pulihkan</string>
+    <string name="prompts_restored">Dipulihkan</string>
+    <string name="prompts_restore_failed">Tidak bisa memulihkan</string>
+    <string name="prompts_restore_all">Pulihkan semua berkas</string>
+    <string name="prompts_restore_all_sub">Menghapus perubahan Anda dan mengembalikan berkas aplikasi</string>
+    <string name="prompts_restore_all_ask">Perubahan Anda di folder akan dihapus dan berkas dari aplikasi dikembalikan.</string>
+    <string name="prompts_note">system/ dan capabilities/ dibaca tiap tugas; tools/, entries/, feedback/, dan roles/ perlu memulai ulang Mika.</string>
 </resources>

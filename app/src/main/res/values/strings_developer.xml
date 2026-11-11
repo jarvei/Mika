@@ -27,7 +27,25 @@
     <string name="dev_run_log">Run records</string>
     <string name="dev_prompts_group">System prompt</string>
     <string name="dev_prompts_title">Load prompts from the phone</string>
-    <string name="dev_prompts_grant">Needs “All files access”; tap to allow it</string>
+    <string name="dev_prompts_grant">Private app folder in use; tap to change it</string>
     <string name="dev_prompts_active">%1$s · %2$d files · %3$d edited · %4$d ignored</string>
     <string name="dev_prompts_error">Not in use: %1$s</string>
+    <string name="prompts_title">System prompt</string>
+    <string name="prompts_folder">Folder</string>
+    <string name="prompts_access">All files access</string>
+    <string name="prompts_access_on">Granted; the public folder on the phone is used</string>
+    <string name="prompts_access_off">Not granted; the private app folder is used</string>
+    <string name="prompts_counts">%1$d files · %2$d edited · %3$d ignored</string>
+    <string name="prompts_changed">Edited or not used</string>
+    <string name="prompts_all_plain">Every file is the one from the app</string>
+    <string name="prompts_rejected">Ignored: %1$s</string>
+    <string name="prompts_edited">Edited</string>
+    <string name="prompts_deleted">Deleted; the app one is used</string>
+    <string name="prompts_restore">Restore</string>
+    <string name="prompts_restored">Restored</string>
+    <string name="prompts_restore_failed">Could not restore</string>
+    <string name="prompts_restore_all">Restore all files</string>
+    <string name="prompts_restore_all_sub">Deletes your changes and puts the app files back</string>
+    <string name="prompts_restore_all_ask">Your changes in the folder are deleted and the files from the app are put back.</string>
+    <string name="prompts_note">system/ and capabilities/ are read on every task; tools/, entries/, feedback/ and roles/ need a restart.</string>
 </resources>

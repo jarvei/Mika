@@ -27,7 +27,25 @@
     <string name="dev_run_log">运行记录</string>
     <string name="dev_prompts_group">系统提示词</string>
     <string name="dev_prompts_title">从手机存储加载提示词</string>
-    <string name="dev_prompts_grant">需要「所有文件访问权限」，点这里去授权</string>
+    <string name="dev_prompts_grant">正在使用 App 私有目录，点这里换</string>
     <string name="dev_prompts_active">%1$s · %2$d 个文件 · %3$d 个已修改 · %4$d 个已忽略</string>
     <string name="dev_prompts_error">未生效：%1$s</string>
+    <string name="prompts_title">系统提示词</string>
+    <string name="prompts_folder">目录</string>
+    <string name="prompts_access">所有文件访问权限</string>
+    <string name="prompts_access_on">已授予；使用手机存储里的公开目录</string>
+    <string name="prompts_access_off">未授予；使用 App 私有目录</string>
+    <string name="prompts_counts">%1$d 个文件 · %2$d 个已修改 · %3$d 个已忽略</string>
+    <string name="prompts_changed">改过或不能用</string>
+    <string name="prompts_all_plain">所有文件都和 App 里的一样</string>
+    <string name="prompts_rejected">已忽略：%1$s</string>
+    <string name="prompts_edited">已修改</string>
+    <string name="prompts_deleted">已删除；用 App 里的那份</string>
+    <string name="prompts_restore">恢复</string>
+    <string name="prompts_restored">已恢复</string>
+    <string name="prompts_restore_failed">恢复失败</string>
+    <string name="prompts_restore_all">恢复所有文件</string>
+    <string name="prompts_restore_all_sub">删掉你的改动，放回 App 里的文件</string>
+    <string name="prompts_restore_all_ask">目录里你改过的内容会被删除，换回 App 里的文件。</string>
+    <string name="prompts_note">system/ 和 capabilities/ 每个任务都会读；tools/、entries/、feedback/ 和 roles/ 要重启 Mika。</string>
 </resources>

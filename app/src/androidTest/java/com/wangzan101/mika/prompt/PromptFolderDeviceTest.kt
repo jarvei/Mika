@@ -20,7 +20,7 @@ import java.io.File
 @RunWith(AndroidJUnit4::class)
 class PromptFolderDeviceTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val identity get() = File(PromptFolder.dir(), "system/identity.md")
+    private val identity get() = File(PromptFolder.dir(context), "system/identity.md")
 
     @After fun reset() {
         Prompts.root = null
@@ -78,6 +78,35 @@ class PromptFolderDeviceTest {
             assertTrue("${broken}", broken != null && broken.ignored >= 1)
             // 不能用:读的时候用的还是 APK 里那份
             assertTrue(Prompts.system("identity").startsWith("You are Mika"))
+        } finally {
+            identity.writeText(original)
+        }
+    }
+
+    /** 设置页那个「恢复」按钮:一份从 APK 里盖回去。 */
+    @Test fun restorePutsTheAppFileBack() {
+        PromptFolder.install(context)
+        val original = identity.readText()
+        try {
+            identity.writeText("MARCADOR EN EL MOVIL")
+            assertEquals("MARCADOR EN EL MOVIL", Prompts.system("identity"))
+            assertTrue(PromptFolder.restore(context, "system/identity.md"))
+            assertEquals(original.trim(), Prompts.system("identity"))
+        } finally {
+            identity.writeText(original)
+        }
+    }
+
+    /** 「恢复所有文件」:目录整个重来,改过的都回到 App 里的那份。 */
+    @Test fun resetPutsEveryFileBack() {
+        PromptFolder.install(context)
+        val original = identity.readText()
+        try {
+            identity.writeText("MARCADOR EN EL MOVIL")
+            assertTrue(PromptFolder.inspect()!!.edited >= 1)
+            assertTrue(PromptFolder.reset(context))
+            assertEquals(0, PromptFolder.inspect()!!.edited)
+            assertEquals(original.trim(), Prompts.system("identity"))
         } finally {
             identity.writeText(original)
         }

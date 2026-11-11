@@ -27,7 +27,25 @@
     <string name="dev_run_log">سوابق اجرا</string>
     <string name="dev_prompts_group">اعلان سیستم</string>
     <string name="dev_prompts_title">بارگذاری اعلان‌ها از حافظهٔ گوشی</string>
-    <string name="dev_prompts_grant">به «دسترسی به همهٔ فایل‌ها» نیاز است؛ برای اجازه بزنید</string>
+    <string name="dev_prompts_grant">پوشهٔ خصوصی برنامه استفاده می‌شود؛ برای تغییر بزنید</string>
     <string name="dev_prompts_active">%1$s · %2$d فایل · %3$d ویرایش‌شده · %4$d نادیده‌گرفته</string>
     <string name="dev_prompts_error">استفاده نشد: %1$s</string>
+    <string name="prompts_title">اعلان سیستم</string>
+    <string name="prompts_folder">پوشه</string>
+    <string name="prompts_access">دسترسی به همهٔ فایل‌ها</string>
+    <string name="prompts_access_on">داده شد؛ پوشهٔ عمومی گوشی استفاده می‌شود</string>
+    <string name="prompts_access_off">داده نشد؛ پوشهٔ خصوصی برنامه استفاده می‌شود</string>
+    <string name="prompts_counts">%1$d فایل · %2$d ویرایش‌شده · %3$d نادیده‌گرفته</string>
+    <string name="prompts_changed">ویرایش‌شده یا نامعتبر</string>
+    <string name="prompts_all_plain">همهٔ فایل‌ها همان فایل‌های برنامه‌اند</string>
+    <string name="prompts_rejected">نادیده‌گرفته: %1$s</string>
+    <string name="prompts_edited">ویرایش‌شده</string>
+    <string name="prompts_deleted">حذف‌شده؛ فایل برنامه استفاده می‌شود</string>
+    <string name="prompts_restore">بازگردانی</string>
+    <string name="prompts_restored">بازگردانی شد</string>
+    <string name="prompts_restore_failed">بازگردانی نشد</string>
+    <string name="prompts_restore_all">بازگردانی همهٔ فایل‌ها</string>
+    <string name="prompts_restore_all_sub">تغییرات شما را پاک و فایل‌های برنامه را برمی‌گرداند</string>
+    <string name="prompts_restore_all_ask">تغییرات شما در پوشه پاک می‌شود و فایل‌های برنامه بازگردانده می‌شوند.</string>
+    <string name="prompts_note">system/ و capabilities/ در هر کار خوانده می‌شوند؛ tools/، entries/، feedback/ و roles/ به راه‌اندازی دوبارهٔ Mika نیاز دارند.</string>
 </resources>

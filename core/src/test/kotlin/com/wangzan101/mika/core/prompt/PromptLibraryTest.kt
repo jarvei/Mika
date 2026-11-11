@@ -127,4 +127,35 @@ class PromptLibraryTest {
         assertEquals(setOf("system/principles.md"), scan.rejected.keys)
         assertTrue(scan.rejected.getValue("system/principles.md").contains("{{nadie}}"))
     }
+
+    /** 「恢复」一条:APK 里那份盖回去,清单记成原样。 */
+    @Test fun restorePutsOneFileBack() {
+        PromptLibrary.sync(dir, "v1", bundle("system/identity.md" to "A"))
+        file("system/identity.md").writeText("mine")
+        assertTrue(PromptLibrary.restore(dir, "system/identity.md", "A".toByteArray()))
+        assertEquals("A", file("system/identity.md").readText())
+        assertFalse(PromptLibrary.current(dir)!!.files.getValue("system/identity.md").edited)
+    }
+
+    /** 「恢复所有」:目录整个重来,自己的文件也不留。 */
+    @Test fun resetDeletesEverythingAndSeedsAgain() {
+        PromptLibrary.sync(dir, "v1", bundle("system/identity.md" to "A"))
+        file("system/identity.md").writeText("mine")
+        file("basura.txt").writeText("x")
+        PromptLibrary.reset(dir, "v2", bundle("system/identity.md" to "A"))
+        assertEquals("A", file("system/identity.md").readText())
+        assertFalse(file("basura.txt").exists())
+        assertEquals("v2", PromptLibrary.current(dir)!!.version)
+    }
+
+    /** 说明文件跟着版本换;用户自己写过的(开头不是那一行)不动。 */
+    @Test fun notesAreRefreshedButAUsersOwnFileIsKept() {
+        PromptLibrary.sync(dir, "v1", bundle("system/identity.md" to "A"))
+        file(PromptLibrary.NOTES).writeText("mis notas")
+        PromptLibrary.sync(dir, "v2", bundle("system/identity.md" to "A"))
+        assertEquals("mis notas", file(PromptLibrary.NOTES).readText())
+        file(PromptLibrary.NOTES).writeText("Mika · prompts del sistema\nviejo\n")
+        PromptLibrary.sync(dir, "v3", bundle("system/identity.md" to "A"))
+        assertTrue(file(PromptLibrary.NOTES).readText().contains("v3"))
+    }
 }

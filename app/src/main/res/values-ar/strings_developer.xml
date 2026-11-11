@@ -27,7 +27,25 @@
     <string name="dev_run_log">سجلات التشغيل</string>
     <string name="dev_prompts_group">موجّه النظام</string>
     <string name="dev_prompts_title">تحميل الموجّهات من ذاكرة الهاتف</string>
-    <string name="dev_prompts_grant">يلزم «الوصول إلى كل الملفات»؛ اضغط للسماح به</string>
+    <string name="dev_prompts_grant">يُستخدم مجلد التطبيق الخاص؛ اضغط لتغييره</string>
     <string name="dev_prompts_active">%1$s · %2$d ملفًا · %3$d معدّلًا · %4$d متجاهلًا</string>
     <string name="dev_prompts_error">غير مستخدم: %1$s</string>
+    <string name="prompts_title">موجّه النظام</string>
+    <string name="prompts_folder">المجلد</string>
+    <string name="prompts_access">الوصول إلى كل الملفات</string>
+    <string name="prompts_access_on">ممنوح؛ يُستخدم المجلد العام في الهاتف</string>
+    <string name="prompts_access_off">غير ممنوح؛ يُستخدم مجلد التطبيق الخاص</string>
+    <string name="prompts_counts">%1$d ملفًا · %2$d معدّلًا · %3$d متجاهلًا</string>
+    <string name="prompts_changed">معدّل أو غير صالح</string>
+    <string name="prompts_all_plain">كل الملفات هي ملفات التطبيق</string>
+    <string name="prompts_rejected">متجاهل: %1$s</string>
+    <string name="prompts_edited">معدّل</string>
+    <string name="prompts_deleted">محذوف؛ يُستخدم ملف التطبيق</string>
+    <string name="prompts_restore">استعادة</string>
+    <string name="prompts_restored">تمت الاستعادة</string>
+    <string name="prompts_restore_failed">تعذّرت الاستعادة</string>
+    <string name="prompts_restore_all">استعادة كل الملفات</string>
+    <string name="prompts_restore_all_sub">يحذف تعديلاتك ويعيد ملفات التطبيق</string>
+    <string name="prompts_restore_all_ask">ستُحذف تعديلاتك في المجلد وتُعاد ملفات التطبيق.</string>
+    <string name="prompts_note">تُقرأ system/ و capabilities/ في كل مهمة؛ أما tools/ و entries/ و feedback/ و roles/ فتحتاج إعادة تشغيل Mika.</string>
 </resources>

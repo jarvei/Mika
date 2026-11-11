@@ -21,3 +21,7 @@ CLAUDE.md
 __pycache__/
 *.py[cod]
 *.egg-info/
+
+# 自己的签名钥匙与口令,只留在本机
+fork.keystore
+fork-signing.properties

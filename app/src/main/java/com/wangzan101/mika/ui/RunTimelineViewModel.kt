@@ -74,6 +74,8 @@ data class TimelineHeader(
     val usedMemory: List<String> = emptyList(),
     /** 这次运行的小结;记录里没有开始事件时为 null(只显示用时)。 */
     val metrics: RunMetrics? = null,
+    /** 这次运行发给模型的提示词摘要([RunEvent.PromptVersion]);改过外部提示词的话和下一次不一样。 */
+    val promptVersion: String? = null,
 )
 
 sealed interface TimelineUi {
@@ -126,6 +128,7 @@ class RunTimelineViewModel(
             } ?: 0,
             usedMemory = resolveMemory(events.filterIsInstance<RunEvent.MemoryUsed>().lastOrNull()?.ids.orEmpty()),
             metrics = metrics,
+            promptVersion = events.filterIsInstance<RunEvent.PromptVersion>().firstOrNull()?.hash?.take(12),
         )
         return TimelineUi.Ready(header, steps(events, toolLabels::label))
     }

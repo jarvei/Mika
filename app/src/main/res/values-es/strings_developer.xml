@@ -27,7 +27,25 @@
     <string name="dev_run_log">Registros de ejecución</string>
     <string name="dev_prompts_group">Prompt del sistema</string>
     <string name="dev_prompts_title">Cargar los prompts desde el teléfono</string>
-    <string name="dev_prompts_grant">Necesita «Acceso a todos los archivos»; toca para concederlo</string>
+    <string name="dev_prompts_grant">Usando la carpeta privada de la app; toca para cambiarla</string>
     <string name="dev_prompts_active">%1$s · %2$d archivos · %3$d editados · %4$d ignorados</string>
     <string name="dev_prompts_error">Sin usar: %1$s</string>
+    <string name="prompts_title">Prompt del sistema</string>
+    <string name="prompts_folder">Carpeta</string>
+    <string name="prompts_access">Acceso a todos los archivos</string>
+    <string name="prompts_access_on">Concedido; se usa la carpeta pública del teléfono</string>
+    <string name="prompts_access_off">Sin conceder; se usa la carpeta privada de la app</string>
+    <string name="prompts_counts">%1$d archivos · %2$d editados · %3$d ignorados</string>
+    <string name="prompts_changed">Editados o sin usar</string>
+    <string name="prompts_all_plain">Todos los archivos son los de la app</string>
+    <string name="prompts_rejected">Ignorado: %1$s</string>
+    <string name="prompts_edited">Editado</string>
+    <string name="prompts_deleted">Borrado; se usa el de la app</string>
+    <string name="prompts_restore">Restaurar</string>
+    <string name="prompts_restored">Restaurado</string>
+    <string name="prompts_restore_failed">No se pudo restaurar</string>
+    <string name="prompts_restore_all">Restaurar todos los archivos</string>
+    <string name="prompts_restore_all_sub">Borra tus cambios y vuelve a poner los de la app</string>
+    <string name="prompts_restore_all_ask">Se borran tus cambios en la carpeta y se vuelven a poner los archivos de la app.</string>
+    <string name="prompts_note">system/ y capabilities/ se leen en cada tarea; tools/, entries/, feedback/ y roles/ necesitan reiniciar Mika.</string>
 </resources>

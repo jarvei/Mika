@@ -28,6 +28,9 @@ object PromptLibrary {
     /** 目录现在的样子(逐份看过):有几份在、几份改过、哪几份不能用(路径 → 原因)。 */
     data class Scan(val files: Int, val edited: Int, val rejected: Map<String, String>)
 
+    /** 清单里一份文件现在的样子。 */
+    data class Item(val path: String, val present: Boolean, val edited: Boolean, val rejected: String?)
+
     /** 目录里现有的清单;没有或读不了时返回 null。 */
     fun current(dir: File): Manifest? =
         File(dir, MANIFEST).takeIf { it.isFile }?.let { runCatching { parse(it.readText(Charsets.UTF_8)) }.getOrNull() }
@@ -114,28 +117,62 @@ object PromptLibrary {
      * 调用前 [Prompts.root] 要指向 [dir],不然验的还是 APK 里的。
      */
     fun scan(dir: File): Scan {
-        val manifest = current(dir) ?: return Scan(0, 0, emptyMap())
-        var files = 0
-        var edited = 0
-        val rejected = LinkedHashMap<String, String>()
-        for ((path, entry) in manifest.files) {
-            val file = File(dir, path)
-            if (!file.isFile) continue          // 自己删了:不计数
-            files++
-            val hash = runCatching { sha256(file.readBytes()) }.getOrNull() ?: continue
-            if (hash == entry.hash) continue
-            edited++
-            runCatching { Prompts.read(path) }
-            Prompts.rejections()[path]?.let { rejected[path] = it }
-        }
-        return Scan(files, edited, rejected)
+        val items = listing(dir)
+        return Scan(
+            files = items.count { it.present },
+            edited = items.count { it.edited },
+            rejected = items.mapNotNull { i -> i.rejected?.let { i.path to it } }.toMap(),
+        )
     }
 
-    /** 目录里的说明;已经有就不动(用户可能自己加了字)。 */
+    /** 清单里每一份现在的样子:[present] 在不在、[edited] 改没改、[rejected] 不能用的原因。 */
+    fun listing(dir: File): List<Item> {
+        val manifest = current(dir) ?: return emptyList()
+        return manifest.files.map { (path, entry) ->
+            val file = File(dir, path)
+            when {
+                !file.isFile -> Item(path, present = false, edited = false, rejected = null)
+                else -> {
+                    val hash = runCatching { sha256(file.readBytes()) }.getOrNull()
+                    if (hash == null || hash == entry.hash) {
+                        Item(path, present = true, edited = false, rejected = null)
+                    } else {
+                        runCatching { Prompts.read(path) }
+                        Item(path, present = true, edited = true, rejected = Prompts.rejections()[path])
+                    }
+                }
+            }
+        }
+    }
+
+    /** 用 APK 里的那一份盖回去,清单里记成原样。 */
+    fun restore(dir: File, path: String, bytes: ByteArray): Boolean {
+        val manifest = current(dir) ?: return false
+        runCatching {
+            File(dir, path).also { it.parentFile?.mkdirs() }.writeBytes(bytes)
+        }.onFailure { return false }
+        val next = LinkedHashMap(manifest.files)
+        next[path] = Entry(sha256(bytes), edited = false)
+        runCatching { File(dir, MANIFEST).writeText(render(manifest.version.orEmpty(), next), Charsets.UTF_8) }
+            .onFailure { return false }
+        return true
+    }
+
+    /** 整个目录重来:删掉再按 APK 放一份(自己的改动也没了)。 */
+    fun reset(dir: File, version: String, bundled: Map<String, ByteArray>): Result {
+        dir.deleteRecursively()
+        return sync(dir, version, bundled)
+    }
+
+    /** 目录里的说明:自己写过的(开头不是我们那行)就不动,否则每次对齐都换成当前版本的说法。 */
     private fun writeNotes(dir: File, version: String) {
         val notes = File(dir, NOTES)
-        if (notes.isFile) return
-        notes.writeText(NOTES_TEXT.replace("{version}", version), Charsets.UTF_8)
+        val text = NOTES_TEXT.replace("{version}", version)
+        if (notes.isFile) {
+            val current = runCatching { notes.readText(Charsets.UTF_8) }.getOrNull()
+            if (current != null && !current.startsWith("Mika · prompts del sistema")) return
+        }
+        runCatching { notes.writeText(text, Charsets.UTF_8) }
     }
 
     private fun sha256(bytes: ByteArray): String =
@@ -161,7 +198,7 @@ object PromptLibrary {
         Reglas
         - Si borras un archivo, Mika usa el que lleva dentro la APK.
         - Un archivo vacío, o con un {{placeholder}} que la app no rellena, se
-          ignora y se usa el de la APK (Ajustes › Opciones de desarrollo lo dice).
+          ignora y se usa el de la APK.
         - En feedback/ no se pueden quitar apartados: si falta una clave, se
           ignora el archivo entero.
         - Al actualizar la app, los archivos que no hayas tocado se sustituyen por
@@ -169,6 +206,13 @@ object PromptLibrary {
         - system/ y capabilities/ se leen en cada tarea: guarda y ya está.
           tools/, entries/, feedback/ y roles/ se leen una vez por arranque:
           reinicia Mika para ver esos cambios.
+
+        Sin «acceso a todos los archivos» Mika usa su propia carpeta
+        (Android/data/<paquete>/files/prompts), que algunos gestores no dejan
+        abrir; al conceder el permiso se traslada todo a esta.
+
+        En Ajustes › Opciones de desarrollo › Prompt del sistema ves qué has
+        tocado, por qué se ignora un archivo, y puedes restaurar uno o todos.
 
         Los archivos son la versión {version}. El manifiesto .seed no hace falta
         tocarlo: es lo que permite saber qué has cambiado tú.

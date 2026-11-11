@@ -27,7 +27,25 @@
     <string name="dev_run_log">実行ログ</string>
     <string name="dev_prompts_group">システムプロンプト</string>
     <string name="dev_prompts_title">スマホのストレージからプロンプトを読み込む</string>
-    <string name="dev_prompts_grant">「すべてのファイルへのアクセス」が必要です。タップして許可してください</string>
+    <string name="dev_prompts_grant">アプリ専用フォルダーを使用中。タップして変更</string>
     <string name="dev_prompts_active">%1$s · %2$d 個のファイル · %3$d 個を編集済み · %4$d 個を無視</string>
     <string name="dev_prompts_error">使用していません：%1$s</string>
+    <string name="prompts_title">システムプロンプト</string>
+    <string name="prompts_folder">フォルダー</string>
+    <string name="prompts_access">すべてのファイルへのアクセス</string>
+    <string name="prompts_access_on">許可済み。スマホの公開フォルダーを使用</string>
+    <string name="prompts_access_off">未許可。アプリ専用フォルダーを使用</string>
+    <string name="prompts_counts">%1$d 個のファイル · %2$d 個を編集 · %3$d 個を無視</string>
+    <string name="prompts_changed">編集済み・使用不可</string>
+    <string name="prompts_all_plain">すべてのファイルがアプリ内のものと同じです</string>
+    <string name="prompts_rejected">無視: %1$s</string>
+    <string name="prompts_edited">編集済み</string>
+    <string name="prompts_deleted">削除済み。アプリ内のものを使用</string>
+    <string name="prompts_restore">元に戻す</string>
+    <string name="prompts_restored">元に戻しました</string>
+    <string name="prompts_restore_failed">元に戻せませんでした</string>
+    <string name="prompts_restore_all">すべてのファイルを元に戻す</string>
+    <string name="prompts_restore_all_sub">変更を削除してアプリ内のファイルに戻します</string>
+    <string name="prompts_restore_all_ask">フォルダー内の変更は削除され、アプリ内のファイルに戻ります。</string>
+    <string name="prompts_note">system/ と capabilities/ はタスクごとに読み込みます。tools/、entries/、feedback/、roles/ は Mika の再起動が必要です。</string>
 </resources>

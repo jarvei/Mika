@@ -184,6 +184,8 @@ private fun HeaderGroup(h: TimelineHeader, onExport: () -> Unit) {
         }
         if (more) {
             ListRow(null, stringResource(R.string.timeline_model_calls)) { RowValue(trPlural(R.plurals.times, h.modelCalls)) }
+            // 这次运行发出去的提示词摘要:改过外部提示词的话,下一次运行的这一个值会变
+            h.promptVersion?.let { v -> ListRow(null, stringResource(R.string.timeline_prompt_version)) { RowValue(v) } }
             if (h.usedMemory.isNotEmpty()) {
                 ListRow(null, stringResource(R.string.timeline_memory_used)) { RowValue(trPlural(R.plurals.items, h.usedMemory.size)) }
                 Column(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)) {
