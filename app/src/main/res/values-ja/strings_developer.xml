@@ -25,4 +25,9 @@
     <string name="dev_speed">速度</string>
     <string name="dev_experiments">実験的機能</string>
     <string name="dev_run_log">実行ログ</string>
+    <string name="dev_prompts_group">システムプロンプト</string>
+    <string name="dev_prompts_title">スマホのストレージからプロンプトを読み込む</string>
+    <string name="dev_prompts_grant">「すべてのファイルへのアクセス」が必要です。タップして許可してください</string>
+    <string name="dev_prompts_active">%1$s · %2$d 個のファイル · %3$d 個を編集済み</string>
+    <string name="dev_prompts_error">使用していません：%1$s</string>
 </resources>

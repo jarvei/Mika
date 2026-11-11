@@ -42,6 +42,11 @@
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
+    <!-- 提示词从手机存储里的 Mika/prompts 读(不用 adb、不重打包):要「所有文件访问权限」才能读写
+         那个目录;不给也能用,只是提示词全用 APK 里的那份 -->
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
     <uses-permission
         android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />

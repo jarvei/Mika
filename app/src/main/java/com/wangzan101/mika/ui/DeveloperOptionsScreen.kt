@@ -48,6 +48,18 @@ val DEVELOPER_NOTE: String get() = tr(R.string.dev_note)
 /** 当前看图模型的「看图定位已验证」:[model] 是它的模型名。 */
 data class GroundingSetting(val model: String, val verified: Boolean)
 
+/** 「提示词从手机存储读」那一行:目录、文件数,和没有权限时去授权。 */
+object PromptCopy {
+    val GROUP: String get() = tr(R.string.dev_prompts_group)
+    val TITLE: String get() = tr(R.string.dev_prompts_title)
+
+    fun subtitle(s: com.wangzan101.mika.prompt.PromptFolder.Status): String = when {
+        s.error != null -> tr(R.string.dev_prompts_error, s.error)
+        !s.granted -> tr(R.string.dev_prompts_grant)
+        else -> tr(R.string.dev_prompts_active, s.dir.absolutePath, s.files, s.edited)
+    }
+}
+
 object GroundingCopy {
     val GROUP: String get() = tr(R.string.cap_vision)
     val TITLE: String get() = tr(R.string.dev_grounding)
@@ -67,12 +79,20 @@ fun DeveloperOptionsScreen(
     grounding: GroundingSetting? = null,
     onGrounding: (Boolean) -> Unit = {},
     onOpenRunStats: (() -> Unit)? = null,
+    prompts: com.wangzan101.mika.prompt.PromptFolder.Status? = null,
+    onPrompts: () -> Unit = {},
 ) {
     PageScaffold(tr(R.string.settings_developer), onBack) {
         GroupLabel(tr(R.string.dev_speed))
         SwitchGroup(DeveloperSwitches.speed(speed), onSpeed)
         GroupLabel(tr(R.string.dev_experiments))
         SwitchGroup(DeveloperSwitches.experimental(speed), onSpeed)
+        if (prompts != null) {
+            GroupLabel(PromptCopy.GROUP)
+            GroupCard {
+                ListRow(null, PromptCopy.TITLE, PromptCopy.subtitle(prompts), first = true, onClick = onPrompts) { RowChevron() }
+            }
+        }
         if (grounding != null) {
             GroupLabel(GroundingCopy.GROUP)
             GroupCard {

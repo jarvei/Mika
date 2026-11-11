@@ -115,6 +115,8 @@ fun SettingsScreen(
     val wechat = remember { (context.applicationContext as com.wangzan101.mika.MikaApp).wechat }
     val wechatState by wechat.state.collectAsState()
     val flags = remember { FeatureFlags.get(context) }
+    // 提示词目录(Mika/prompts)的状态:启动时由 MikaApp 对齐,这一页只显示、必要时重新对齐
+    var promptFolder by remember { mutableStateOf((context.applicationContext as com.wangzan101.mika.MikaApp).promptFolder) }
     var personalStart by remember { mutableStateOf(flags.personalStart()) }
     var parallelMax by remember { mutableIntStateOf(flags.parallelMax()) }
     var keepScreenOn by remember { mutableStateOf(flags.keepScreenOn()) }
@@ -247,6 +249,15 @@ fun SettingsScreen(
             grounding = visionConfig?.let { GroundingSetting(it.model, it.capabilities.groundingVerified) },
             onGrounding = { verified -> scope.launch { withContext(Dispatchers.IO) { store.setVisionGroundingVerified(verified) } } },
             onOpenRunStats = { page = SettingsPage.RunStats },
+            prompts = promptFolder,
+            // 点这一行:重新对齐一次(Mika/prompts),还没授权就去系统的「所有文件访问权限」
+            onPrompts = {
+                scope.launch {
+                    val s = withContext(Dispatchers.IO) { com.wangzan101.mika.prompt.PromptFolder.install(context) }
+                    promptFolder = s
+                    if (!s.granted) openAllFilesAccess(context)
+                }
+            },
         )
         SettingsPage.RunStats -> RunStatsScreen(remember { RunStore(context).metrics }, onBack = back)
     }
@@ -540,6 +551,25 @@ private fun StatusSummary(check: Prerequisites.Check, onProblem: (Problem) -> Un
             Modifier.testTag("settings-status"),
         ) {
             MikaButton(copy.link, { onProblem(problem) }, kind = ButtonKind.Tonal, size = ButtonSize.Small)
+        }
+    }
+}
+
+/**
+ * 打开系统的「所有文件访问权限」页(提示词目录 Mika/prompts 要用它);
+ * 个别系统没有单独这一页,就退到总列表。
+ */
+private fun openAllFilesAccess(context: android.content.Context) {
+    val task = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+    val app = android.content.Intent(
+        android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+        android.net.Uri.parse("package:${context.packageName}"),
+    ).addFlags(task)
+    runCatching { context.startActivity(app) }.onFailure {
+        runCatching {
+            context.startActivity(
+                android.content.Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).addFlags(task),
+            )
         }
     }
 }

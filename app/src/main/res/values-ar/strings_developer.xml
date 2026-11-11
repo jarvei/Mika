@@ -25,4 +25,9 @@
     <string name="dev_speed">السرعة</string>
     <string name="dev_experiments">التجارب</string>
     <string name="dev_run_log">سجلات التشغيل</string>
+    <string name="dev_prompts_group">موجّه النظام</string>
+    <string name="dev_prompts_title">تحميل الموجّهات من ذاكرة الهاتف</string>
+    <string name="dev_prompts_grant">يلزم «الوصول إلى كل الملفات»؛ اضغط للسماح به</string>
+    <string name="dev_prompts_active">%1$s · %2$d ملفًا · %3$d معدّلًا</string>
+    <string name="dev_prompts_error">غير مستخدم: %1$s</string>
 </resources>

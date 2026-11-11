@@ -1,5 +1,6 @@
 package com.wangzan101.mika.core.prompt
 
+import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -7,15 +8,37 @@ import java.util.concurrent.ConcurrentHashMap
  * system/ 身份(L0)、capabilities/ 各能力一段(L1)、tools/ 每个工具的说明、feedback/ 工具与主循环给模型的反馈、
  * roles/ 内部角色(列标准、核查、描述、定位……)。
  * 文字里的 {{name}} 由调用方填;漏填的直接报错,不把占位符发给模型。
+ *
+ * 外部目录([root]):手机存储里放一份同样的树(见 PromptLibrary)。那里有这份文件就用它,
+ * 没有或不合格(空文件、出现模板里没有的占位符、反馈少了键)就用 APK 里的,原因记在 [rejections] 里。
  */
 object Prompts {
-    private val cache = ConcurrentHashMap<String, String>()
+    /** APK 里那份;进程内不变。 */
+    private val shippedCache = ConcurrentHashMap<String, String>()
 
-    /** 资源原文(去掉首尾空白)。 */
-    fun read(path: String): String = cache.getOrPut(path) {
-        checkNotNull(Prompts::class.java.getResourceAsStream("/prompts/$path")) { "missing prompts/$path" }
-            .bufferedReader(Charsets.UTF_8).use { it.readText() }.trim()
-    }
+    /** 外部目录读到的,按文件的大小和修改时间认新旧(保存文件即生效)。 */
+    private val deviceCache = ConcurrentHashMap<String, Hit>()
+
+    /** 被放弃的外部文件:路径 → 原因。界面拿它提示用户。 */
+    private val rejected = ConcurrentHashMap<String, String>()
+
+    /** 外部提示词目录;null 表示只用 APK 里的那份。由 App 启动时设置。 */
+    @Volatile
+    var root: File? = null
+        set(value) {
+            field = value
+            deviceCache.clear()
+            rejected.clear()
+        }
+
+    private class Hit(val stamp: Long, val text: String)
+
+    private const val MAX_CHARS = 200_000
+
+    fun read(path: String): String = fromDevice(path) ?: shipped(path)
+
+    /** 外部文件里被放弃的那些(路径 → 原因);文件改好后下次读就没这条了。 */
+    fun rejections(): Map<String, String> = rejected.toMap()
 
     fun system(name: String): String = read("system/$name.md")
 
@@ -37,4 +60,42 @@ object Prompts {
     }
 
     private val PLACEHOLDER = Regex("\\{\\{([a-z0-9_]+)\\}\\}")
+
+    /** APK 里的原文(去掉首尾空白)。 */
+    private fun shipped(path: String): String = shippedCache.getOrPut(path) {
+        checkNotNull(Prompts::class.java.getResourceAsStream("/prompts/$path")) { "missing prompts/$path" }
+            .bufferedReader(Charsets.UTF_8).use { it.readText() }.trim()
+    }
+
+    /** 外部目录里同一路径的原文;没有或不合格时返回 null(调用方用 APK 里的)。 */
+    private fun fromDevice(path: String): String? {
+        val dir = root ?: return null
+        val file = File(dir, path)
+        if (!file.isFile) return null
+        val stamp = file.lastModified() * 31L + file.length()
+        deviceCache[path]?.let { if (it.stamp == stamp) return it.text }
+        val raw = runCatching { file.readText(Charsets.UTF_8) }.getOrNull() ?: return reject(path, "cannot read")
+        val text = raw.trim()
+        if (text.isEmpty()) return reject(path, "empty file")
+        if (text.length > MAX_CHARS) return reject(path, "too long (${text.length} chars, max $MAX_CHARS)")
+        // 模板里没有的占位符,代码不会填,发到模型那里就是字面的 {{…}}
+        val unknown = placeholders(text) - placeholders(shipped(path))
+        if (unknown.isNotEmpty()) return reject(path, "placeholders the app does not fill: ${unknown.sorted().joinToString(" ") { "{{$it}}" }}")
+        // 反馈按「## 键」取:少了键是代码里按名字要的,整个文件不认
+        if (path.startsWith("feedback/")) {
+            val lost = Feedback.parse(shipped(path)).map { it.first }.toSet() - Feedback.parse(text).map { it.first }.toSet()
+            if (lost.isNotEmpty()) return reject(path, "feedback keys removed: ${lost.sorted().joinToString(" ")}")
+        }
+        rejected.remove(path)
+        deviceCache[path] = Hit(stamp, text)
+        return text
+    }
+
+    private fun reject(path: String, why: String): String? {
+        rejected[path] = why
+        return null
+    }
+
+    private fun placeholders(text: String): Set<String> =
+        PLACEHOLDER.findAll(text).map { it.groupValues[1] }.toSet()
 }

@@ -25,4 +25,9 @@
     <string name="dev_speed">Speed</string>
     <string name="dev_experiments">Experiments</string>
     <string name="dev_run_log">Run records</string>
+    <string name="dev_prompts_group">System prompt</string>
+    <string name="dev_prompts_title">Load prompts from the phone</string>
+    <string name="dev_prompts_grant">Needs “All files access”; tap to allow it</string>
+    <string name="dev_prompts_active">%1$s · %2$d files · %3$d edited</string>
+    <string name="dev_prompts_error">Not in use: %1$s</string>
 </resources>
