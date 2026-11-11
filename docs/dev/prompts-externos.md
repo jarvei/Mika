@@ -119,3 +119,64 @@ otra máquina, `adb install -r` actualiza sin desinstalar.
 La firma no coincide con la del Mika oficial, así que la primera instalación de este fork
 sobre el oficial exige desinstalar (se van los datos de la app; la carpeta de prompts está
 fuera y se queda).
+
+## Estado para retomar
+
+Guardado el 11-nov-2026, al cerrar la sesión.
+
+**Repo.** Fork `jarvei/Mika`, rama `fork/prompts-externos`, HEAD `3db0d463`, árbol limpio y
+empujado. El remoto `origin` sigue apuntando al upstream `wangzan101/Mika`; el fork está en
+el remoto `fork`. Commitear y subir: `git push fork fork/prompts-externos`.
+
+**Firma.** `fork.keystore` (RSA 4096, SHA-256 `f856dc…e5fb`) y `fork-signing.properties` en
+la raíz del repo, los dos fuera de git. `perf` y `release` firman con esa clave si el
+fichero está; sin él, `perf` cae a la clave de depuración. Copiando los dos ficheros a otra
+máquina, allí se compila algo que actualiza el móvil con `adb install -r`.
+
+**Móvil** (Note 18 Ultra, Android 13): instalado `com.wangzan101.mika` firmado con la clave
+del fork, con «acceso a todos los archivos» concedido por appops, y `/sdcard/Mika/prompts`
+sembrada y alineada a `0.1.39 3db0d46`. Las builds de prueba `.dev` están desinstaladas.
+
+**Queda por comprobar** (no se pudo en la sesión):
+
+1. La pantalla nueva, a ojo: el móvil estaba bloqueado y no se pudo ni hacer captura.
+   Ajustes › Avanzado y otros › Opciones de desarrollador › Prompt del sistema.
+2. Una tarea de verdad: configurar un proveedor, editar `system/identity.md`, lanzar una
+   tarea y ver que la fila «Versión del prompt» del registro cambia respecto a la anterior.
+3. El traslado de la carpeta privada a la pública al conceder el permiso, en el aparato:
+   las pruebas cubrieron cada carpeta por separado, no el paso de una a otra. Para probarlo:
+   `adb shell appops set com.wangzan101.mika MANAGE_EXTERNAL_STORAGE default`, arrancar
+   (siembra la privada), concederlo, arrancar y buscar en logcat
+   `MikaPrompts: moved the prompt folder` y los ficheros en `/sdcard/Mika/prompts`.
+
+Al guardar, `adb devices` no veía ningún aparato: hay que volver a enchufarlo (y aceptar la
+depuración USB) antes de repetir las comprobaciones del móvil.
+
+**Comandos.**
+
+```
+export JAVA_HOME=/home/usuario/jdk17/jdk-17.0.20+8
+export ANDROID_HOME=/home/usuario/Android/Sdk
+cd ~/Proyectos/Mika
+./gradlew :core:test :app:testPerfUnitTest :app:assemblePerf
+adb install -r app/build/outputs/apk/perf/app-arm64-v8a-perf.apk
+adb shell appops set com.wangzan101.mika MANAGE_EXTERNAL_STORAGE allow
+adb logcat -s MikaPrompts:*
+```
+
+Pruebas en el aparato (paquete `.dev`, no toca la app instalada):
+
+```
+./gradlew :app:assembleDebug :app:assembleDebugAndroidTest -PdevInstall
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb shell appops set com.wangzan101.mika.dev MANAGE_EXTERNAL_STORAGE allow
+adb shell am instrument -w -e class com.wangzan101.mika.prompt.PromptFolderDeviceTest \
+  com.wangzan101.mika.dev.test/androidx.test.runner.AndroidJUnitRunner
+# sin permiso: appops set com.wangzan101.mika.dev MANAGE_EXTERNAL_STORAGE default
+#   y la clase PromptFolderNoPermissionTest
+```
+
+**Limitación conocida.** Dos compilaciones distintas instaladas a la vez (p. ej. la `.dev`
+de pruebas y la normal) comparten `/sdcard/Mika/prompts`: cada una reescribe el manifiesto al
+arrancar. Con los prompts iguales es inofensivo; con dos juegos distintos se pisarían.
