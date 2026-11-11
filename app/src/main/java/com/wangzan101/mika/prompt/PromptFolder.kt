@@ -7,7 +7,6 @@ import com.wangzan101.mika.BuildConfig
 import com.wangzan101.mika.core.prompt.PromptLibrary
 import com.wangzan101.mika.core.prompt.Prompts
 import java.io.File
-import java.util.zip.ZipFile
 
 /**
  * 手机存储里的提示词目录:整个 prompts/ 树的一份副本,Mika 读的是这一份,不是 APK 里的。
@@ -64,21 +63,8 @@ object PromptFolder {
             // 已经是这个版本:不读 APK、不动文件,直接接上
             return Status(dir, granted = true, files = current.files.size, edited = current.files.count { it.value.edited }, version = version)
         }
-        val result = PromptLibrary.sync(dir, version, bundled(context))
+        val result = PromptLibrary.sync(dir, version, PromptLibrary.readApk(File(context.applicationInfo.sourceDir)))
         Log.i(TAG, "prompts aligned to $version: ${result.files} files, ${result.edited} edited")
         return Status(dir, granted = true, files = result.files, edited = result.edited, version = result.version)
-    }
-
-    /** APK 里的 prompts/:它们是 APK 根目录下的普通条目(和 classloader 读的是同一份)。 */
-    private fun bundled(context: Context): Map<String, ByteArray> {
-        val apk = File(context.applicationInfo.sourceDir)
-        val out = LinkedHashMap<String, ByteArray>()
-        ZipFile(apk).use { zip ->
-            for (e in zip.entries()) {
-                if (e.isDirectory || !e.name.startsWith("prompts/")) continue
-                out[e.name] = zip.getInputStream(e).use { it.readBytes() }
-            }
-        }
-        return out
     }
 }

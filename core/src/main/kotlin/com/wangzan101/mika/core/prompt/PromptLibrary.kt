@@ -2,6 +2,7 @@ package com.wangzan101.mika.core.prompt
 
 import java.io.File
 import java.security.MessageDigest
+import java.util.zip.ZipFile
 
 /**
  * 手机存储里的提示词目录(Mika/prompts)的维护:目录是 APK 里 prompts/ 的一份副本,模型读的是这一份。
@@ -26,6 +27,21 @@ object PromptLibrary {
     /** 目录里现有的清单;没有或读不了时返回 null。 */
     fun current(dir: File): Manifest? =
         File(dir, MANIFEST).takeIf { it.isFile }?.let { runCatching { parse(it.readText(Charsets.UTF_8)) }.getOrNull() }
+
+    /**
+     * 从 APK 里读出提示词:它们是 APK 根目录下的普通条目 `prompts/<层>/<文件>`,
+     * 键去掉前面的 `prompts/`,好按目录(也就是 [Prompts.root])原样放。
+     */
+    fun readApk(apk: File): Map<String, ByteArray> {
+        val out = LinkedHashMap<String, ByteArray>()
+        ZipFile(apk).use { zip ->
+            for (e in zip.entries()) {
+                if (e.isDirectory || !e.name.startsWith("prompts/")) continue
+                out[e.name.removePrefix("prompts/")] = zip.getInputStream(e).use { it.readBytes() }
+            }
+        }
+        return out
+    }
 
     fun parse(text: String): Manifest {
         var version: String? = null
