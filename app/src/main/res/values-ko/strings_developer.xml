@@ -28,6 +28,6 @@
     <string name="dev_prompts_group">시스템 프롬프트</string>
     <string name="dev_prompts_title">휴대폰 저장소에서 프롬프트 불러오기</string>
     <string name="dev_prompts_grant">「모든 파일 액세스」 권한이 필요합니다. 눌러서 허용하세요</string>
-    <string name="dev_prompts_active">%1$s · 파일 %2$d개 · 편집됨 %3$d개</string>
+    <string name="dev_prompts_active">%1$s · 파일 %2$d개 · 편집됨 %3$d개 · 무시됨 %4$d개</string>
     <string name="dev_prompts_error">사용하지 않음: %1$s</string>
 </resources>

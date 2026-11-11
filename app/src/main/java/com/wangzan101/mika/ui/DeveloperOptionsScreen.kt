@@ -56,7 +56,7 @@ object PromptCopy {
     fun subtitle(s: com.wangzan101.mika.prompt.PromptFolder.Status): String = when {
         s.error != null -> tr(R.string.dev_prompts_error, s.error)
         !s.granted -> tr(R.string.dev_prompts_grant)
-        else -> tr(R.string.dev_prompts_active, s.dir.absolutePath, s.files, s.edited)
+        else -> tr(R.string.dev_prompts_active, s.dir.absolutePath, s.files, s.edited, s.ignored)
     }
 }
 

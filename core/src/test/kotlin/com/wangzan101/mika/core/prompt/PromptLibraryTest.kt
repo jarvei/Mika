@@ -14,6 +14,7 @@ class PromptLibraryTest {
     private val dir: File = Files.createTempDirectory("mika-promptlib").toFile()
 
     @After fun clean() {
+        Prompts.root = null
         dir.deleteRecursively()
     }
 
@@ -87,5 +88,43 @@ class PromptLibraryTest {
         assertNull(PromptLibrary.parse("").version)
         assertEquals(0, PromptLibrary.parse("").files.size)
         assertEquals(0, PromptLibrary.current(dir)!!.files.size)
+    }
+
+    /** 阿拉伯语、波斯语会把数字换成别的字符:哈希得跟语言无关,不然换语言后所有文件都像改过。 */
+    @Test fun hashesAreAsciiWhateverTheLocale() {
+        val before = java.util.Locale.getDefault()
+        try {
+            java.util.Locale.setDefault(java.util.Locale.forLanguageTag("ar-EG"))
+            PromptLibrary.sync(dir, "v1", bundle("system/identity.md" to "A"))
+        } finally {
+            java.util.Locale.setDefault(before)
+        }
+        val hash = PromptLibrary.current(dir)!!.files.getValue("system/identity.md").hash
+        assertTrue(hash, hash.matches(Regex("[0-9a-f]{64}")))
+    }
+
+    /** 改回和 APK 里一样的内容之后,不再算「改过」,以后照常跟着升级走。 */
+    @Test fun contentEqualToTheShippedOneStopsBeingEdited() {
+        PromptLibrary.sync(dir, "v1", bundle("system/identity.md" to "A"))
+        file("system/identity.md").writeText("mine")
+        PromptLibrary.sync(dir, "v2", bundle("system/identity.md" to "A2"))
+        assertTrue(PromptLibrary.current(dir)!!.files.getValue("system/identity.md").edited)
+        file("system/identity.md").writeText("A2")
+        PromptLibrary.sync(dir, "v3", bundle("system/identity.md" to "A2"))
+        assertFalse(PromptLibrary.current(dir)!!.files.getValue("system/identity.md").edited)
+    }
+
+    /** 逐份看一眼:在的、改过的、不能用的(占位符是代码不会填的)。 */
+    @Test fun scanCountsWhatIsThereAndWhatIsBroken() {
+        PromptLibrary.sync(dir, "v1", bundle("system/identity.md" to "A", "system/principles.md" to "B", "roles/title.md" to "C"))
+        file("system/identity.md").writeText("mía")
+        file("system/principles.md").writeText("You are {{nadie}}.")
+        file("roles/title.md").delete()
+        Prompts.root = dir
+        val scan = PromptLibrary.scan(dir)
+        assertEquals(2, scan.files)                       // roles/title.md 删掉了,不算
+        assertEquals(2, scan.edited)                      // 两份都和清单里记的不一样
+        assertEquals(setOf("system/principles.md"), scan.rejected.keys)
+        assertTrue(scan.rejected.getValue("system/principles.md").contains("{{nadie}}"))
     }
 }

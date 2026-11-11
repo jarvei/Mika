@@ -43,5 +43,10 @@ class PromptSeedIntegrationTest {
             assertEquals(path, String(bytes, Charsets.UTF_8).trim(), Prompts.read(path))
         }
         assertEquals(emptyMap<String, String>(), Prompts.rejections())
+        // 刚放进去的一整份:一份不少、没有改过的、没有不能用的
+        val scan = PromptLibrary.scan(dir)
+        assertEquals(entries.size, scan.files)
+        assertEquals(0, scan.edited)
+        assertTrue(scan.rejected.toString(), scan.rejected.isEmpty())
     }
 }

@@ -28,6 +28,6 @@
     <string name="dev_prompts_group">Системный промпт</string>
     <string name="dev_prompts_title">Загружать промпты с телефона</string>
     <string name="dev_prompts_grant">Нужен «Доступ ко всем файлам» — нажмите, чтобы разрешить</string>
-    <string name="dev_prompts_active">%1$s · файлов: %2$d · изменено: %3$d</string>
+    <string name="dev_prompts_active">%1$s · файлов: %2$d · изменено: %3$d · пропущено: %4$d</string>
     <string name="dev_prompts_error">Не используется: %1$s</string>
 </resources>

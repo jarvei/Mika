@@ -16,9 +16,6 @@ object Prompts {
     /** APK 里那份;进程内不变。 */
     private val shippedCache = ConcurrentHashMap<String, String>()
 
-    /** 外部目录读到的,按文件的大小和修改时间认新旧(保存文件即生效)。 */
-    private val deviceCache = ConcurrentHashMap<String, Hit>()
-
     /** 被放弃的外部文件:路径 → 原因。界面拿它提示用户。 */
     private val rejected = ConcurrentHashMap<String, String>()
 
@@ -27,11 +24,8 @@ object Prompts {
     var root: File? = null
         set(value) {
             field = value
-            deviceCache.clear()
             rejected.clear()
         }
-
-    private class Hit(val stamp: Long, val text: String)
 
     private const val MAX_CHARS = 200_000
 
@@ -67,13 +61,14 @@ object Prompts {
             .bufferedReader(Charsets.UTF_8).use { it.readText() }.trim()
     }
 
-    /** 外部目录里同一路径的原文;没有或不合格时返回 null(调用方用 APK 里的)。 */
+    /**
+     * 外部目录里同一路径的原文;没有或不合格时返回 null(调用方用 APK 里的)。
+     * 每次都读盘:文件很小,而按修改时间做缓存会在「同一秒内改成同样大小」时读到旧内容。
+     */
     private fun fromDevice(path: String): String? {
         val dir = root ?: return null
         val file = File(dir, path)
         if (!file.isFile) return null
-        val stamp = file.lastModified() * 31L + file.length()
-        deviceCache[path]?.let { if (it.stamp == stamp) return it.text }
         val raw = runCatching { file.readText(Charsets.UTF_8) }.getOrNull() ?: return reject(path, "cannot read")
         val text = raw.trim()
         if (text.isEmpty()) return reject(path, "empty file")
@@ -87,7 +82,6 @@ object Prompts {
             if (lost.isNotEmpty()) return reject(path, "feedback keys removed: ${lost.sorted().joinToString(" ")}")
         }
         rejected.remove(path)
-        deviceCache[path] = Hit(stamp, text)
         return text
     }
 

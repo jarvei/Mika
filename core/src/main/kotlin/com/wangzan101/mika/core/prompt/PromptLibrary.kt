@@ -2,6 +2,7 @@ package com.wangzan101.mika.core.prompt
 
 import java.io.File
 import java.security.MessageDigest
+import java.util.Locale
 import java.util.zip.ZipFile
 
 /**
@@ -23,6 +24,9 @@ object PromptLibrary {
 
     /** 对齐之后目录的样子:对齐的版本、文件数、其中改过的。 */
     data class Result(val version: String, val files: Int, val edited: Int)
+
+    /** 目录现在的样子(逐份看过):有几份在、几份改过、哪几份不能用(路径 → 原因)。 */
+    data class Scan(val files: Int, val edited: Int, val rejected: Map<String, String>)
 
     /** 目录里现有的清单;没有或读不了时返回 null。 */
     fun current(dir: File): Manifest? =
@@ -46,7 +50,9 @@ object PromptLibrary {
     fun parse(text: String): Manifest {
         var version: String? = null
         val files = LinkedHashMap<String, Entry>()
-        for (line in text.lineSequence()) {
+        for (raw in text.lineSequence()) {
+            // 用别的编辑器存过(CRLF)也认
+            val line = raw.trimEnd('\r')
             if (line.startsWith("version ")) {
                 version = line.removePrefix("version ").trim().takeIf { it.isNotEmpty() }
                 continue
@@ -76,6 +82,7 @@ object PromptLibrary {
         for ((path, bytes) in bundled) {
             val target = File(dir, path)
             val existing = if (target.isFile) runCatching { sha256(target.readBytes()) }.getOrNull() else null
+            val shipped = sha256(bytes)
             val prev = old.files[path]
             // 没动过才换;目录里本来就有、又不是我们放的文件(来历不明)当作改过
             val untouched = prev != null && !prev.edited && existing == prev.hash
@@ -87,11 +94,11 @@ object PromptLibrary {
             if (write) {
                 target.parentFile?.mkdirs()
                 target.writeBytes(bytes)
-                next[path] = Entry(sha256(bytes), edited = false)
+                next[path] = Entry(shipped, edited = false)
             } else {
                 val hash = existing ?: continue
-                // 与我们放的那份不一样,或者本来就不是我们放的:记成改过,以后升级不再覆盖
-                val isEdited = prev == null || prev.edited || prev.hash != hash
+                // 和 APK 里那份一样就不算改过(手动改回去的,以后照常跟着升级走)
+                val isEdited = hash != shipped
                 next[path] = Entry(hash, isEdited)
                 if (isEdited) edited++
             }
@@ -99,6 +106,29 @@ object PromptLibrary {
         File(dir, MANIFEST).writeText(render(version, next), Charsets.UTF_8)
         writeNotes(dir, version)
         return Result(version, next.size, edited)
+    }
+
+    /**
+     * 逐份看一遍目录:有几份在、几份和清单里记的不一样(改过或坏了)、哪几份不能用。
+     * 只有改过的那几份要交给 [Prompts] 验一遍(刚放进去的原样文件按定义是能用的),所以不读 APK。
+     * 调用前 [Prompts.root] 要指向 [dir],不然验的还是 APK 里的。
+     */
+    fun scan(dir: File): Scan {
+        val manifest = current(dir) ?: return Scan(0, 0, emptyMap())
+        var files = 0
+        var edited = 0
+        val rejected = LinkedHashMap<String, String>()
+        for ((path, entry) in manifest.files) {
+            val file = File(dir, path)
+            if (!file.isFile) continue          // 自己删了:不计数
+            files++
+            val hash = runCatching { sha256(file.readBytes()) }.getOrNull() ?: continue
+            if (hash == entry.hash) continue
+            edited++
+            runCatching { Prompts.read(path) }
+            Prompts.rejections()[path]?.let { rejected[path] = it }
+        }
+        return Scan(files, edited, rejected)
     }
 
     /** 目录里的说明;已经有就不动(用户可能自己加了字)。 */
@@ -109,7 +139,8 @@ object PromptLibrary {
     }
 
     private fun sha256(bytes: ByteArray): String =
-        MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it.toInt() and 0xff) }
+        // Locale.ROOT:有的语言把数字换成别的字符(阿拉伯语、波斯语),哈希就跟别的语言对不上了
+        MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(Locale.ROOT, it.toInt() and 0xff) }
 
     val NOTES_TEXT = """
         Mika · prompts del sistema
@@ -141,5 +172,8 @@ object PromptLibrary {
 
         Los archivos son la versión {version}. El manifiesto .seed no hace falta
         tocarlo: es lo que permite saber qué has cambiado tú.
+
+        Ojo: cualquier app con «acceso a todos los archivos» puede escribir aquí,
+        y esto es el prompt del sistema. Es el precio de editarlo sin recompilar.
     """.trimIndent() + "\n"
 }

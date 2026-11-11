@@ -28,6 +28,6 @@
     <string name="dev_prompts_group">系统提示词</string>
     <string name="dev_prompts_title">从手机存储加载提示词</string>
     <string name="dev_prompts_grant">需要「所有文件访问权限」，点这里去授权</string>
-    <string name="dev_prompts_active">%1$s · %2$d 个文件 · %3$d 个已修改</string>
+    <string name="dev_prompts_active">%1$s · %2$d 个文件 · %3$d 个已修改 · %4$d 个已忽略</string>
     <string name="dev_prompts_error">未生效：%1$s</string>
 </resources>

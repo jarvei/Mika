@@ -28,6 +28,6 @@
     <string name="dev_prompts_group">系統提示詞</string>
     <string name="dev_prompts_title">從手機儲存空間載入提示詞</string>
     <string name="dev_prompts_grant">需要「所有檔案存取權限」，點這裡去授權</string>
-    <string name="dev_prompts_active">%1$s · %2$d 個檔案 · %3$d 個已修改</string>
+    <string name="dev_prompts_active">%1$s · %2$d 個檔案 · %3$d 個已修改 · %4$d 個已忽略</string>
     <string name="dev_prompts_error">未生效：%1$s</string>
 </resources>

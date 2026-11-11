@@ -391,15 +391,10 @@ class MikaApp : Application(), WebOwner, SandboxOwner, TaskEnvironment.Owner, Ph
         )
     }
 
-    /** 外部提示词目录(Mika/prompts)的状态:启动时对齐一次,开发者选项里显示。 */
-    @Volatile
-    var promptFolder: com.wangzan101.mika.prompt.PromptFolder.Status? = null
-        private set
-
     override fun onCreate() {
         super.onCreate()
         // 提示词优先从手机存储里的 Mika/prompts 读;没有「所有文件访问权限」就照旧全用 APK 里的那份
-        promptFolder = com.wangzan101.mika.prompt.PromptFolder.install(this)
+        com.wangzan101.mika.prompt.PromptFolder.install(this)
         // 上次进程在复制或绑定分享草稿途中退出时留下的临时文件;目录至多保留一份有效草稿。
         runCatching { sharedDrafts.cleanup() }
         // 界面以外的文字(通知、服务、悬浮胶囊)按 App 语言取

@@ -28,6 +28,6 @@
     <string name="dev_prompts_group">Prompt sistem</string>
     <string name="dev_prompts_title">Muat prompt dari penyimpanan ponsel</string>
     <string name="dev_prompts_grant">Perlu «Akses semua file»; ketuk untuk mengizinkan</string>
-    <string name="dev_prompts_active">%1$s · %2$d berkas · %3$d diedit</string>
+    <string name="dev_prompts_active">%1$s · %2$d berkas · %3$d diedit · %4$d diabaikan</string>
     <string name="dev_prompts_error">Tidak dipakai: %1$s</string>
 </resources>

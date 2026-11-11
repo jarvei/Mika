@@ -32,14 +32,13 @@ class PromptsDeviceTest {
         assertTrue(Prompts.rejections().isEmpty())
     }
 
+    /** 保存就生效;同一秒里改成同样长度的另一份也一样(按修改时间做缓存时这里会读到旧的)。 */
     @Test fun savingTheFileIsEnough() {
-        put("system/identity.md", "one")
+        put("system/identity.md", "uno")
         Prompts.root = dir
-        assertEquals("one", Prompts.system("identity"))
-        val file = put("system/identity.md", "second version")
-        // 同一秒里改两次的文件靠修改时间分不出来:拨到两秒后,等于用户过一会儿再存
-        file.setLastModified(file.lastModified() + 2_000)
-        assertEquals("second version", Prompts.system("identity"))
+        assertEquals("uno", Prompts.system("identity"))
+        put("system/identity.md", "dos")
+        assertEquals("dos", Prompts.system("identity"))
     }
 
     @Test fun emptyFileFallsBackToTheApk() {
@@ -73,8 +72,7 @@ class PromptsDeviceTest {
         Prompts.root = dir
         Prompts.system("identity")
         assertTrue(Prompts.rejections().isNotEmpty())
-        val file = put("system/identity.md", "Fixed.")
-        file.setLastModified(file.lastModified() + 2_000)
+        put("system/identity.md", "Fixed.")
         assertEquals("Fixed.", Prompts.system("identity"))
         assertTrue(Prompts.rejections().isEmpty())
     }

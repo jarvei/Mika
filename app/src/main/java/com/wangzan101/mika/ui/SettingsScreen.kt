@@ -116,7 +116,13 @@ fun SettingsScreen(
     val wechatState by wechat.state.collectAsState()
     val flags = remember { FeatureFlags.get(context) }
     // 提示词目录(Mika/prompts)的状态:启动时由 MikaApp 对齐,这一页只显示、必要时重新对齐
-    var promptFolder by remember { mutableStateOf((context.applicationContext as com.wangzan101.mika.MikaApp).promptFolder) }
+    var promptFolder by remember { mutableStateOf(com.wangzan101.mika.prompt.PromptFolder.status) }
+    // 进「开发者选项」时把目录逐份数一遍(启动时不做,140 个文件不压在主线程上)
+    LaunchedEffect(page) {
+        if (page == SettingsPage.Developer) {
+            promptFolder = withContext(Dispatchers.IO) { com.wangzan101.mika.prompt.PromptFolder.inspect() } ?: promptFolder
+        }
+    }
     var personalStart by remember { mutableStateOf(flags.personalStart()) }
     var parallelMax by remember { mutableIntStateOf(flags.parallelMax()) }
     var keepScreenOn by remember { mutableStateOf(flags.keepScreenOn()) }
@@ -253,7 +259,10 @@ fun SettingsScreen(
             // 点这一行:重新对齐一次(Mika/prompts),还没授权就去系统的「所有文件访问权限」
             onPrompts = {
                 scope.launch {
-                    val s = withContext(Dispatchers.IO) { com.wangzan101.mika.prompt.PromptFolder.install(context) }
+                    val s = withContext(Dispatchers.IO) {
+                        com.wangzan101.mika.prompt.PromptFolder.install(context)
+                            .let { com.wangzan101.mika.prompt.PromptFolder.inspect() ?: it }
+                    }
                     promptFolder = s
                     if (!s.granted) openAllFilesAccess(context)
                 }

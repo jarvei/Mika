@@ -12,9 +12,10 @@ import org.junit.runner.RunWith
 import java.io.File
 
 /**
- * 真机:提示词目录(/sdcard/Mika/prompts)真的在手机上被读到,删掉一份就回到 APK 里的那份。
- * 要先把「所有文件访问权限」给这个包(`adb shell appops set <包名> MANAGE_EXTERNAL_STORAGE allow`);
- * 改的是 system/identity.md,两个用例读完都恢复原样。
+ * 真机:提示词目录(/sdcard/Mika/prompts)真的在手机上被读到,删掉一份就回到 APK 里的那份,
+ * 逐份检查能数出改过和不能用的。要先把「所有文件访问权限」给这个包
+ * (`adb shell appops set <包名> MANAGE_EXTERNAL_STORAGE allow`);
+ * 改的是 system/identity.md,每个用例读完都恢复原样。
  */
 @RunWith(AndroidJUnit4::class)
 class PromptFolderDeviceTest {
@@ -57,6 +58,26 @@ class PromptFolderDeviceTest {
             // 目录里没有这一份:回到 APK 里的,和改之前一样
             assertEquals(bundled, Prompts.system("identity"))
             assertTrue(Prompts.rejections().isEmpty())
+        } finally {
+            identity.writeText(original)
+        }
+    }
+
+    /** 设置里那一行数的就是这个:改过的份数、以及因为不合格被忽略的份数。 */
+    @Test fun inspectCountsEditsAndIgnoredFiles() {
+        PromptFolder.install(context)
+        val original = identity.readText()
+        try {
+            identity.writeText("MARCADOR EN EL MOVIL")
+            val edited = PromptFolder.inspect()
+            assertTrue("$edited", edited != null && edited.edited >= 1)
+            assertEquals("$edited", 0, edited!!.ignored)
+
+            identity.writeText("You are {{nadie}}.")
+            val broken = PromptFolder.inspect()
+            assertTrue("${broken}", broken != null && broken.ignored >= 1)
+            // 不能用:读的时候用的还是 APK 里那份
+            assertTrue(Prompts.system("identity").startsWith("You are Mika"))
         } finally {
             identity.writeText(original)
         }

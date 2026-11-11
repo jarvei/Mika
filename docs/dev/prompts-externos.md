@@ -17,9 +17,15 @@ los archivos». Mika lo declara en el manifiesto y no hace nada mientras no se c
 sin permiso, todos los prompts salen de la APK.
 
 Ajustes › Avanzado y otros › Opciones de desarrollador: la fila «Prompt del sistema»
-enseña la ruta, cuántos archivos se están usando y cuántos has tocado tú. Si falta el
-permiso, al tocarla se abre la pantalla del sistema para concederlo; si ya está, vuelve
-a alinear la carpeta (útil después de actualizar).
+enseña la ruta, cuántos archivos hay, cuántos has tocado tú y cuántos se ignoran por no
+valer. Los tres números se cuentan al abrir esa página (`PromptFolder.inspect()`), no al
+arrancar: leer el árbol entero en el arranque se nota en el tiempo de apertura. Si falta el permiso, al tocar la
+fila se abre la pantalla del sistema para concederlo; si ya está, vuelve a alinear la
+carpeta (útil después de actualizar).
+
+Ojo: la carpeta está fuera del sandbox de la app. Cualquier app con «acceso a todos los
+archivos» puede escribir ahí, y lo que hay ahí es el prompt del sistema. Es el precio de
+poder editarlo desde el teléfono sin recompilar.
 
 ## Qué hay en la carpeta
 
@@ -49,13 +55,20 @@ manifiesto que usa la app para saber qué has cambiado. No hace falta tocar `.se
 
 ## Actualizaciones de la app
 
-`PromptLibrary` compara la versión del manifiesto con la del APK (número de versión y
-hash del commit, el mismo que sale en «Acerca de»). Cuando cambian:
+`PromptLibrary` compara la versión del manifiesto con la del APK: número de versión, hash
+del commit y una marca del APK instalado (tamaño y fecha del archivo). Lo último hace
+falta porque al recompilar sin commitear el hash no cambia y la carpeta se quedaría con
+los prompts viejos. Cuando la versión cambia:
 
 - los archivos que no has tocado se sustituyen por la versión nueva;
 - los que has tocado se quedan como están, marcados como editados, y ya no se
-  vuelven a sobrescribir en futuras actualizaciones;
+  vuelven a sobrescribir en futuras actualizaciones (si los devuelves al texto de la
+  app, vuelven a ser «no tocados» y siguen actualizándose solos);
 - los que hayas borrado no se vuelven a poner (borrar = «usa el de la APK»).
+
+`PromptLibrary.scan()` es lo que cuenta la fila de ajustes: recorre el manifiesto, mira
+qué archivos siguen ahí, cuáles ya no coinciden con lo sembrado y pasa esos por
+`Prompts` para quedarse con los motivos de los que se ignoran.
 
 Si cambia tanto el prompt que un archivo editado se queda inservible, se borra y se
 deja que la app lo vuelva a poner, o se toca «Prompt del sistema» en los ajustes.
@@ -63,9 +76,9 @@ deja que la app lo vuelva a poner, o se toca «Prompt del sistema» en los ajust
 ## Dónde está el código
 
 - `core/src/main/kotlin/com/wangzan101/mika/core/prompt/Prompts.kt`: lectura de cada
-  prompt, caché por archivo y rechazo de los que no valen.
+  prompt (siempre desde disco cuando hay carpeta) y rechazo de los que no valen.
 - `core/src/main/kotlin/com/wangzan101/mika/core/prompt/PromptLibrary.kt`:
-  sincronización de la carpeta, manifiesto y LEEME.txt.
+  sincronización de la carpeta, manifiesto, LEEME.txt y `scan`.
 - `app/src/main/java/com/wangzan101/mika/prompt/PromptFolder.kt`: ruta, permiso,
   lectura de los prompts que lleva la APK y arranque (lo llama `MikaApp` al crear el
   proceso).
