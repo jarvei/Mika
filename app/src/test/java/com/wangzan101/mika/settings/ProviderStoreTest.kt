@@ -190,6 +190,33 @@ class ProviderStoreTest {
         assertEquals(64_000, reloaded.configFor(ModelRole.Light)!!.capabilities.contextTokens)
     }
 
+    /**
+     * 旧版本照用户填的原样存了整条端点:读入时退回根地址,服务商和配置都改,并写回文件——
+     * 否则列模型接到 `…/chat/completions/models` 上(404),调用也会把最后一段接两遍。
+     */
+    @Test fun savedEndpointUrlIsRepairedToItsRootOnLoad() {
+        File(tmp.root, "providers.json").writeText(
+            """{"services":[{"id":"p1","name":"Unlid","kind":"OpenAiCompat",
+                "baseUrl":"https://api.unlid.ai/v1/chat/completions","models":[]}],
+                "providers":[{"id":"c1","providerId":"p1","name":"Unlid","kind":"OpenAiCompat",
+                "baseUrl":"https://api.unlid.ai/v1/chat/completions","model":"glm-5.3-flash-uncensored",
+                "toolCalls":true,"vision":false,"contextTokens":64000,"reasoning":false,
+                "groundingVerified":false,"promptCaching":"implicit"}],
+                "uses":{"Main":{"use":"model","config":"c1"}}}""",
+        )
+        val s = store()
+        assertEquals("https://api.unlid.ai/v1", s.provider("p1")!!.baseUrl)
+        // 那份空表是拿错地址问出来的:清成「还没列过」,打开服务商页会重新列一次
+        assertNull(s.provider("p1")!!.models)
+        assertEquals("https://api.unlid.ai/v1", s.list().single().baseUrl)
+        s.modelFor(ModelRole.Main)
+        assertEquals("https://api.unlid.ai/v1", built.last().first.baseUrl)
+        // 修好的地址写回文件:下次读入不用再改
+        val text = File(tmp.root, "providers.json").readText()
+        assertFalse(text.contains("/chat/completions"))
+        assertEquals(2, Regex(""""baseUrl":"https://api\.unlid\.ai/v1"""").findAll(text).count())
+    }
+
     @Test fun manualTriggerUsesCoreBoundsAndASmallerReselectedWindowKeepsTheStoredValue() {
         val s = store()
         val p = connected(s)

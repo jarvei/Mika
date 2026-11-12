@@ -140,6 +140,7 @@ sealed interface ModelListResult {
  *   `architecture.input_modalities`、`supported_parameters` 等字段的(部分聚合服务会给)才填能力。
  *   也认另一种写法:`capabilities.tools.supported`、`capabilities.reasoning.supported`、`limit.context`、
  *   `modalities.input`(有 `image/…` 即能看图),以及按协议给地址的 `api` 表(见 [ListedModel.endpoint])。
+ *   服务商把能力放在自己块里的(Unlid 的 `unlid`)也照读:上下文、工具调用、思考。
  *   用 ChatGPT 账号列出的是 `models` 表:名字在 `slug`、显示名在 `display_name`,只留 `visibility` 为 `list` 的、保持服务端的次序;
  *   给了 `input_modalities`、`context_window`、`supported_reasoning_levels` 的照填。
  * - Anthropic:`GET {base}/v1/models`,按 `after_id` 翻页;`max_input_tokens` 是上下文,
@@ -216,6 +217,8 @@ class ModelCatalog(private val http: OkHttpClient) {
                 ?.trim()?.takeIf { it.isNotEmpty() }
         }?.distinct()
         val api = o.obj("api")
+        // 有的服务商把能力放在自己的块里(Unlid 的 `unlid`):上下文、工具调用、思考都写在那儿,顶层没有
+        val unlid = o.obj("unlid")
         // 有的聚合服务不给 `api` 表,改用 `supported_endpoints` 写这个模型能走哪几个端点
         val protocols = (o["supported_endpoints"] as? JsonArray)
             ?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull?.let(ModelProtocol::ofPath) }
@@ -233,15 +236,15 @@ class ModelCatalog(private val http: OkHttpClient) {
             id = id,
             displayName = (o.str("name") ?: o.str("display_name")).orEmpty(),
             toolCalls = params?.let { "tools" in it } ?: caps?.obj("tools")?.bool("supported")
-                ?: caps?.bool("function_calling") ?: caps?.bool("tool_calls"),
+                ?: caps?.bool("function_calling") ?: caps?.bool("tool_calls") ?: unlid?.bool("supports_tools"),
             vision = inputs?.let { "image" in it } ?: modalIn?.let { m -> m.any { it == "image" || it.startsWith("image/") } }
                 ?: modality?.let { "image" in it } ?: o.bool("supports_image_in") ?: caps?.bool("vision"),
             contextTokens = o.int("context_length") ?: o.int("context_window") ?: o.int("max_context_length")
-                ?: o.obj("limit")?.int("context"),
+                ?: o.obj("limit")?.int("context") ?: unlid?.int("context_length"),
             reasoning = params?.let { "reasoning" in it || "include_reasoning" in it } ?: caps?.obj("reasoning")?.bool("supported")
-                ?: o.bool("supports_reasoning") ?: reasoningLevels?.let { it.isNotEmpty() },
+                ?: o.bool("supports_reasoning") ?: reasoningLevels?.let { it.isNotEmpty() } ?: unlid?.bool("supports_reasoning"),
             endpoint = endpoint,
-            reasoningEfforts = efforts,
+            reasoningEfforts = efforts ?: unlid?.let(::unlidEfforts),
             unsupportedApis = if (endpoint == null) api?.keys?.toList().orEmpty() else emptyList(),
             protocols = protocols,
             chat = when (o.str("type")?.lowercase()) {
@@ -283,6 +286,15 @@ class ModelCatalog(private val http: OkHttpClient) {
 
     /** `{"a":{"supported":true},"b":{"supported":false},"supported":true}` 里标了支持的子项:`[a]`。 */
     private fun JsonObject.supportedKeys(): List<String> = keys.filter { (this[it] as? JsonObject)?.bool("supported") == true }
+
+    /**
+     * Unlid 这类把能力放在自己块里的列表(`unlid`):`supports_reasoning` 为假时没有档位(能不能思考由 `reasoning` 那项说),
+     * 为真时给它能接受的几档——文档写的是 `reasoning.effort` 取 low/medium/high,关得掉思考(`can_disable_reasoning`)
+     * 的再加一档 none(它翻译成 `reasoning: {enabled: false}`)。
+     */
+    private fun unlidEfforts(o: JsonObject): List<String>? =
+        if (o.bool("supports_reasoning") != true) null
+        else listOfNotNull("none".takeIf { o.bool("can_disable_reasoning") == true }) + listOf("low", "medium", "high")
 
     private fun geminiModel(o: JsonObject): ListedModel? {
         val id = o.str("name")?.removePrefix("models/")?.takeIf { it.isNotBlank() } ?: return null

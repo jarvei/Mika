@@ -214,6 +214,28 @@ class ModelOptionsTest {
         assertEquals("192.168.1.5", ProviderConnection.displayName(local))
     }
 
+    /** 贴进来的是整条端点:存的是根地址,列模型、调用都由适配器自己接最后一段。 */
+    @Test fun apiRootDropsThePathTheAdapterAppendsItself() {
+        val chat = ProviderConfig.Kind.OpenAiCompat
+        assertEquals("https://api.unlid.ai/v1", ProviderConnection.apiRoot("https://api.unlid.ai/v1/chat/completions", chat))
+        assertEquals("https://api.unlid.ai/v1", ProviderConnection.apiRoot(" https://api.unlid.ai/v1/chat/completions/ ", chat))
+        assertEquals("https://api.unlid.ai/v1", ProviderConnection.apiRoot("https://api.unlid.ai/v1/models", chat))
+        assertEquals("https://api.example.test/v1", ProviderConnection.apiRoot("https://api.example.test/v1/responses", ProviderConfig.Kind.OpenAiResponses))
+        // Anthropic、Gemini 连版本段也由适配器自己接
+        assertEquals("https://api.anthropic.com", ProviderConnection.apiRoot("https://api.anthropic.com/v1/messages", ProviderConfig.Kind.Anthropic))
+        assertEquals("https://generativelanguage.googleapis.com", ProviderConnection.apiRoot("https://generativelanguage.googleapis.com/v1beta/models", ProviderConfig.Kind.Gemini))
+        // 本来就是根地址(或带的是接口自己的路径)的不动
+        assertEquals("https://api.deepseek.com", ProviderConnection.apiRoot("https://api.deepseek.com/", chat))
+        assertEquals("https://api.anthropic.com", ProviderConnection.apiRoot("https://api.anthropic.com", ProviderConfig.Kind.Anthropic))
+        assertEquals("https://opencode.ai/zen/go/v1", ProviderConnection.apiRoot("https://opencode.ai/zen/go/v1", chat))
+        assertEquals("https://dashscope.aliyuncs.com/compatible-mode/v1", ProviderConnection.apiRoot("https://dashscope.aliyuncs.com/compatible-mode/v1", chat))
+        // 归组也按根地址:贴整条端点和填根地址是同一家
+        assertEquals(
+            ProviderConnection.keyOf(chat, "https://api.unlid.ai/v1", "Unlid"),
+            ProviderConnection.keyOf(chat, "https://api.unlid.ai/v1/chat/completions", "Unlid"),
+        )
+    }
+
     @Test fun providerOptionsAreRememberedListPlusSavedConfigs() {
         val p = Provider("p", "DeepSeek", ProviderConfig.Kind.OpenAiCompat, "https://api.deepseek.com", listOf(ListedModel("a"), ListedModel("b")))
         val savedCaps = base.copy(vision = true)

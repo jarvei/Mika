@@ -871,7 +871,8 @@ class ProviderStore(
     private fun findOrAddProvider(name: String, kind: ProviderConfig.Kind, baseUrl: String, signIn: String? = null): Provider {
         val key = ProviderConnection.keyOf(kind, baseUrl, name)
         _providers.value.firstOrNull { it.key == key && it.signIn == signIn }?.let { return it }
-        val p = Provider(newId(), name.trim(), kind, baseUrl.trim(), signIn = signIn)
+        // 贴进来的是整条端点时存它的根(见 [ProviderConnection.apiRoot]):子路径由适配器自己接
+        val p = Provider(newId(), name.trim(), kind, ProviderConnection.apiRoot(baseUrl, kind), signIn = signIn)
         _providers.value = _providers.value + p
         return p
     }
@@ -902,6 +903,7 @@ class ProviderStore(
         }
         migrate()
         repairStaleContextDefaults()
+        repairEndpointUrls()
         // 指向不存在的配置的选择退回默认,没人用的配置删掉;和文件里的不一样(含刚迁移的用途)才写回
         _roles.value = _roles.value.keepOnly(_configs.value.map { it.id }.toSet())
         repairUnavailableReasoningEfforts()
@@ -988,6 +990,22 @@ class ProviderStore(
         _configs.value = _configs.value.map { c ->
             fixed[c.id]?.let { window -> c.copy(capabilities = c.capabilities.copy(contextTokens = window)) } ?: c
         }
+    }
+
+    /**
+     * 存着的地址是整条端点(`…/chat/completions`、`…/models`)的退回根地址(见 [ProviderConnection.apiRoot]):
+     * 这样的地址列不出模型(接到 `…/chat/completions/models` 上,404),调用也会把子路径接两遍。
+     * 旧版本照用户填的原样存,读入时按现在的规则改回来;地址本来就规范的什么都不动。
+     * 改了的这家记下的列表一并清空:那份空表是拿错地址问出来的,清成「还没列过」,打开服务商页会重新列一次。
+     */
+    private fun repairEndpointUrls() {
+        val broken = _providers.value.filter { ProviderConnection.apiRoot(it.baseUrl, it.kind) != it.baseUrl }
+        if (broken.isEmpty()) return
+        val ids = broken.map { it.id }.toSet()
+        _providers.value = _providers.value.map {
+            if (it.id in ids) it.copy(baseUrl = ProviderConnection.apiRoot(it.baseUrl, it.kind), models = null) else it
+        }
+        _configs.value = _configs.value.map { it.copy(baseUrl = ProviderConnection.apiRoot(it.baseUrl, it.kind)) }
     }
 
     private fun providerOf(o: JsonObject) = Provider(

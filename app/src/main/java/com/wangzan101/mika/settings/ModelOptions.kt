@@ -211,7 +211,7 @@ internal data class ModelVersion(val numbers: List<Int>, val stage: Int, val dat
 
 /** 服务商的归组规则和显示名:同一接口类型、同一地址、同一名字算同一个服务商。 */
 object ProviderConnection {
-    fun keyOf(kind: ProviderConfig.Kind, baseUrl: String, name: String) = "${kind.name}|${normalizeUrl(baseUrl)}|${name.trim()}"
+    fun keyOf(kind: ProviderConfig.Kind, baseUrl: String, name: String) = "${kind.name}|${apiRoot(baseUrl, kind)}|${name.trim()}"
 
     /** 没起名字的用地址的主机名。 */
     fun displayName(c: ProviderConfig): String = c.name.ifBlank { nameForUrl(c.baseUrl) }
@@ -220,4 +220,25 @@ object ProviderConnection {
         ProviderPresets.forBaseUrl(baseUrl)?.label ?: baseUrl.trim().toHttpUrlOrNull()?.host ?: baseUrl.trim()
 
     fun normalizeUrl(url: String) = url.trim().trimEnd('/')
+
+    /**
+     * 接口的根地址:适配器都自己接最后一段(`/chat/completions`、`/messages`、`/responses`、`/models`…),
+     * Anthropic 和 Gemini 连版本段(`/v1`、`/v1beta`)也自己接。
+     * 用户常把文档里的端点整条贴进来(如 `https://api.unlid.ai/v1/chat/completions`),照原样存下去
+     * 就会接成 `…/chat/completions/chat/completions`、列模型接到 `…/chat/completions/models`(404,
+     * 界面说成「这个服务不提供模型列表」)。末尾正是一段端点路径时把它去掉,只留根;别的照 [normalizeUrl]。
+     */
+    fun apiRoot(url: String, kind: ProviderConfig.Kind): String {
+        val root = normalizeUrl(url)
+        val path = ENDPOINTS.firstOrNull { root.endsWith(it) } ?: return root
+        val withoutPath = root.dropLast(path.length).trimEnd('/')
+        return when (kind) {
+            ProviderConfig.Kind.Anthropic -> withoutPath.removeSuffix("/v1").trimEnd('/')
+            ProviderConfig.Kind.Gemini -> withoutPath.removeSuffix("/v1beta").trimEnd('/')
+            else -> withoutPath
+        }
+    }
+
+    /** 适配器自己接在根地址后面的那几段。长的在前:先认 `/chat/completions` 再认 `/completions`。 */
+    private val ENDPOINTS = listOf("/chat/completions", "/completions", "/messages", "/responses", "/models")
 }

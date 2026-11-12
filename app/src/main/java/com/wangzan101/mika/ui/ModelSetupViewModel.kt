@@ -155,18 +155,24 @@ data class AddForm(
     /** 不测试也能存:地址格式对、该有 Key 的有 Key。和 [canTest] 不同,不看测试进度,也不要求填模型名。 */
     val canSaveUntested: Boolean get() = urlProblem == null && (!keyRequired || apiKey.isNotBlank()) && test != ListState.Running
 
+    /**
+     * 真正拿去存、拿去接子路径的地址:贴进来的是整条端点(`…/v1/chat/completions`)时退回根
+     * (见 [ProviderConnection.apiRoot])。列模型、调用都由适配器自己接最后一段,存整条会接两遍。
+     */
+    val apiBaseUrl: String get() = ProviderConnection.apiRoot(baseUrl, kind)
+
     /** 自定义填的是某家服务商的官方地址(主机名对得上,见 [ProviderPresets.forHost]):建议改用那个预设。 */
-    val suggestedPreset: ProviderPreset? get() = if (isCustom && urlProblem == null) ProviderPresets.forHost(baseUrl) else null
+    val suggestedPreset: ProviderPreset? get() = if (isCustom && urlProblem == null) ProviderPresets.forHost(apiBaseUrl) else null
 
     /** 地址就是 [suggestedPreset] 的那个地址,选的接口类型却和它的不一样:照这样一定调不通。 */
     val presetKindMismatch: Boolean
-        get() = suggestedPreset?.let { s -> ProviderPresets.forBaseUrl(baseUrl.trim()) == s && kind != s.kind } == true
+        get() = suggestedPreset?.let { s -> ProviderPresets.forBaseUrl(apiBaseUrl) == s && kind != s.kind } == true
 
     /** 举模型名的例子按哪一类接口:地址对得上某个预设的按那个预设,否则按选的接口类型。 */
     val exampleKind: ProviderConfig.Kind get() = suggestedPreset?.kind ?: kind
 
     /** 自定义没起名字时用的名字:地址的主机名(地址是某家预设的就用预设名)。 */
-    val defaultName: String get() = ProviderConnection.nameForUrl(baseUrl)
+    val defaultName: String get() = ProviderConnection.nameForUrl(apiBaseUrl)
 
     /**
      * 存成服务商时用的名字:预设用预设名,自定义用填的名字、没填用 [defaultName]。
@@ -175,10 +181,10 @@ data class AddForm(
     val providerName: String get() = if (isCustom) name.trim().ifEmpty { defaultName } else preset
 
     /** 这家要放会话号的请求头名:选的预设声明了的用它;自定义的地址对得上某个预设也用那个预设的。 */
-    val sessionHeader: String? get() = presetFor(preset).sessionHeader ?: ProviderPresets.forBaseUrl(baseUrl.trim())?.sessionHeader
+    val sessionHeader: String? get() = presetFor(preset).sessionHeader ?: ProviderPresets.forBaseUrl(apiBaseUrl)?.sessionHeader
 
     /** 这家自己的模型名里的词(见 [ProviderPreset.familyTokens]):选的预设给了的用它,否则按地址对得上的预设。 */
-    val familyTokens: List<String> get() = presetFor(preset).familyTokens.ifEmpty { ModelOptions.familyOf(baseUrl) }
+    val familyTokens: List<String> get() = presetFor(preset).familyTokens.ifEmpty { ModelOptions.familyOf(apiBaseUrl) }
 
     companion object {
         fun of(p: ProviderPreset) = AddForm(p.label, p.kind, p.baseUrl, "")
@@ -461,7 +467,7 @@ class ModelSetupViewModel(
         _state.update { it.copy(form = it.form.copy(test = ListState.Running), probeNote = null, pickToProbe = null) }
         testJob = scope.launch {
             val key = f.apiKey.trim()
-            val baseUrl = f.baseUrl.trim()
+            val baseUrl = f.apiBaseUrl
             val typed = f.typedModel
             val models = when (val r = withContext(io) { store.listModels(f.kind, baseUrl, key.ifEmpty { null }, f.sessionHeader) }) {
                 is ModelListResult.Ok -> r.models
@@ -546,7 +552,7 @@ class ModelSetupViewModel(
         _state.update { it.copy(form = it.form.copy(test = ListState.Running), probeNote = null, pickToProbe = null) }
         testJob = scope.launch {
             val key = f.apiKey.trim()
-            val baseUrl = f.baseUrl.trim()
+            val baseUrl = f.apiBaseUrl
             val typed = f.typedModel
             val saved = withContext(io) {
                 store.connect(

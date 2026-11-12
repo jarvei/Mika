@@ -140,6 +140,30 @@ class ModelCatalogTest {
         assertEquals(listOf(true, true, true, true, true, true), list.map { it.usable })
     }
 
+    /** 服务商把能力放在自己块里(Unlid 的 `unlid`):上下文、工具调用、思考照读,关得掉思考的才有 none。 */
+    @Test fun openAiCompatReadsTheProvidersOwnCapabilityBlock() = runTest {
+        server.enqueue(ok("""{"object":"list","data":[
+            {"id":"glm-5.3-flash-uncensored","object":"model","owned_by":"unlid",
+             "unlid":{"status":"live","available":true,"uncensored":true,"context_length":262144,"max_output":8192,
+                      "supports_tools":true,"supports_reasoning":true,"can_disable_reasoning":true,
+                      "pricing":{"input_usd_per_m":0.24,"output_usd_per_m":0.96}}},
+            {"id":"qwen3.8-27b-uncensored","unlid":{"context_length":131072,"supports_tools":false,"supports_reasoning":true}},
+            {"id":"gemma-4-31b-uncensored","unlid":{"supports_tools":true,"supports_reasoning":false}}
+        ]}"""))
+        val byId = models(catalog.openAiCompat("$base/v1", "ul-k")).associateBy { it.id }
+        assertEquals(
+            ListedModel("glm-5.3-flash-uncensored", toolCalls = true, contextTokens = 262_144, reasoning = true,
+                reasoningEfforts = listOf("none", "low", "medium", "high")),
+            byId.getValue("glm-5.3-flash-uncensored"),
+        )
+        // 关不掉思考的没有 none
+        assertEquals(listOf("low", "medium", "high"), byId.getValue("qwen3.8-27b-uncensored").reasoningEfforts)
+        assertEquals(false, byId.getValue("qwen3.8-27b-uncensored").toolCalls)
+        // 不能思考的没有档位
+        assertEquals(false, byId.getValue("gemma-4-31b-uncensored").reasoning)
+        assertEquals(null, byId.getValue("gemma-4-31b-uncensored").reasoningEfforts)
+    }
+
     /** 列表写明了不是对话模型的(`type`,或输出里没有文字):记下来,选默认主模型时跳过。 */
     @Test fun openAiCompatReadsWhetherAModelChats() = runTest {
         server.enqueue(ok("""{"data":[
